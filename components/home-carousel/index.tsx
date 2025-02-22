@@ -1,57 +1,85 @@
 import * as React from "react";
-import { Dimensions, Text, View } from "react-native";
+import { Dimensions, Text, View, TouchableOpacity } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
+import MediaCount from "./MediaCount";
 import Carousel, {
   ICarouselInstance,
   Pagination,
 } from "react-native-reanimated-carousel";
- 
-const data = [...new Array(6).keys()];
+import { Feather } from '@expo/vector-icons';
+import StorageChart from "./StorageChart";
+
+interface StorageInfo {
+  totalSpace: string;
+  freeSpace: string;
+  usedSpace: string;
+}
+
+interface HomeCarouselProps {
+  storageInfo: StorageInfo;
+  mediaCount: {
+    photos: number;
+    videos: number;
+  };
+}
+
 const width = Dimensions.get("window").width;
- 
-export default  function HomeCarousel() {
+
+export default function HomeCarousel({ storageInfo, mediaCount }: HomeCarouselProps) {
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   
-  const onPressPagination = (index: number) => {
-    ref.current?.scrollTo({
-      /**
-       * Calculate the difference between the current index and the target index
-       * to ensure that the carousel scrolls to the nearest index
-       */
-      count: index - progress.value,
-      animated: true,
-    });
-  };
- 
+  React.useEffect(() => {
+    const autoPlay = setInterval(() => {
+      ref.current?.next();
+    }, 5000);
+
+    return () => clearInterval(autoPlay);
+  }, []);
+  
+  const slides = [
+    {
+      type: 'storage',
+      component: <StorageChart storageInfo={storageInfo} />
+    },
+    {
+      type: 'media',
+      component: (
+        <MediaCount mediaCount={mediaCount} />
+      )
+    }
+  ];
+
   return (
-    <View style={{ flex: 1 }}>
+    <View className="h-56 relative">
       <Carousel
         ref={ref}
         width={width}
-        height={width / 2}
-        data={data}
+        height={200}
+        data={slides}
         onProgressChange={progress}
-        renderItem={({ index }) => (
-          <View
-            style={{
-              flex: 1,
-              borderWidth: 1,
-              justifyContent: "center",
-            }}
-          >
-            <Text style={{ textAlign: "center", fontSize: 30 }}>{index}</Text>
+        autoPlay={true}
+        autoPlayInterval={5000}
+        renderItem={({ item }) => (
+          <View className="flex-1 justify-center items-center px-4">
+            {item.component}
           </View>
         )}
       />
- 
-      <Pagination.Basic
-        progress={progress}
-        data={data}
-        dotStyle={{ backgroundColor: "rgba(0,0,0,0.2)", borderRadius: 50 }}
-        containerStyle={{ gap: 5, marginTop: 10 }}
-        onPress={onPressPagination}
-      />
+      <View className="absolute flex-row justify-between w-full px-2 top-24">
+        <TouchableOpacity 
+          onPress={() => ref.current?.prev()}
+          className="p-4"
+        >
+          <Feather name="chevron-left" size={20} color="#99999980" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => ref.current?.next()}
+          className="p-4"
+        >
+          <Feather name="chevron-right" size={20} color="#99999980" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
