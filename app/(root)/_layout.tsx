@@ -17,15 +17,15 @@ export default function RootLayout() {
           fontFamily: 'Rubik-Medium',
           fontSize: 32,
           color: '#1a1a1a',
-          letterSpacing: -1,
+          // letterSpacing: -1,
         },
         headerTitleAlign: 'left',
-        headerLeftContainerStyle: {
-          paddingLeft: 20,
-        },
-        headerRightContainerStyle: {
-          paddingRight: 20,
-        },
+        // headerLeftContainerStyle: {
+        //   paddingLeft: 20,
+        // },
+        // headerRightContainerStyle: {
+          // paddingRight: 20,
+        // },
         headerRight: () => (
           <TouchableOpacity
             style={{
@@ -60,7 +60,7 @@ export default function RootLayout() {
             fontFamily: 'Rubik-Medium',
             fontSize: 32,
             color: '#1a1a1a',
-            letterSpacing: -1,
+            // letterSpacing: -1,
           },
           headerShown: false,
         }}
