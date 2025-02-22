@@ -5,6 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { format } from 'date-fns';
 import { SwipeScreenComponent } from '@/components/screens/SwipeScreenComponent';
 
+
 export default function SwipeScreen() {
   const { month } = useLocalSearchParams<{month: string}>();
   const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);

@@ -6,6 +6,7 @@ import {
     Dimensions,
     TouchableOpacity,
     Text,
+    Alert
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { Video } from 'expo-av';
@@ -22,6 +23,19 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+
+const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
+    if (assets.length > 0) {
+      try {
+        await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
+        Alert.alert('Deleted', 'Selected media files have been deleted');
+      } catch (error) {
+        Alert.alert('Error', 'Failed to delete assets');
+      }
+    } else {
+      Alert.alert('No media', 'No assets available to delete');
+    }
+  };
 
 export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.Asset[]}) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -131,8 +145,9 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
 
     const proceedToDelete = async () => {
         console.log('Assets marked for deletion:', toDeleteAssets.length);
-        // Here you would implement the actual deletion logic
-        // For now, we'll just log the assets
+        
+        // await shareImages(toDeleteAssets.map(asset => asset.uri));
+        await deleteAssets(toDeleteAssets);
         toDeleteAssets.forEach((asset) => {
             console.log('Will delete:', asset.uri);
         });
