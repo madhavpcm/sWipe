@@ -1,4 +1,4 @@
-import { Slot, Stack } from "expo-router";
+import {  Stack } from "expo-router";
 import "./global.css"
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -27,7 +27,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Slot />
+      <Stack screenOptions={{ headerShown:false}}/>
     </GestureHandlerRootView>
   );
 }

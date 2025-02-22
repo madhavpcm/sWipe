@@ -2,7 +2,7 @@
   "expo": {
     "name": "SortingHat",
     "displayName": "SortingHat",
-    "slug": "restate",
+    "slug": "swipe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -74,8 +74,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "0909f432-5c43-403a-8377-6ef1738ce714"
+        "projectId": "e109229a-a158-4218-9dd8-c6703215f3ee"
       }
-    }
+    },
+    "owner": "gomodtidy2"
   }
 }
