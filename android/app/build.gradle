@@ -176,15 +176,18 @@ dependencies {
     implementation project(':react-native-delete-media')
 }
 
-android {
-    namespace 'com.gomodtidy.swipe'
-    compileSdk 35
-
-    defaultConfig {
-        applicationId 'com.gomodtidy.swipe'
-        minSdk 24
-        targetSdk 35
-        versionCode 1
-        versionName "0.0.1"
-    }
-}
+//android {
+//	namespace 'com.gomodtidy.swipe'
+//		compileSdk 35
+//
+//		buildFeatures {
+//			buildConfig = true
+//		}
+//	defaultConfig {
+//		applicationId 'com.gomodtidy.swipe'
+//			minSdk 24
+//			targetSdk 35
+//			versionCode 1
+//			versionName "0.0.1"
+//	}
+//}

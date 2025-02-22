@@ -1,4 +1,4 @@
-package com.amalasin.restate
+package com.gomodtidy.swipe
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
