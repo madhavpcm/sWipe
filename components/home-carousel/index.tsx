@@ -44,9 +44,7 @@ export default function HomeCarousel({ storageInfo, mediaCount }: HomeCarouselPr
     },
     {
       type: 'media',
-      component: (
-        <MediaCount mediaCount={mediaCount} />
-      )
+      component: <MediaCount mediaCount={mediaCount} />
     }
   ];
 

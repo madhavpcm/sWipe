@@ -18,25 +18,8 @@ import * as FileSsystem from 'expo-file-system'
 import HomeCarousel from '@/components/home-carousel/index';
 import { Ionicons } from '@expo/vector-icons';
 import MonthList from "@/components/month-list";
-import { format } from 'date-fns';
-import StorageChart from '@/components/StorageChart';
-import ImageCarousel from "@/components/Carousel";
-import Carousel from "react-native-reanimated-carousel";
-import React from "react";
+import { format, parseISO } from 'date-fns';
 
-const styles = StyleSheet.create({
-  headingStyles:{
-    fontSize: 30,
-    color: '#000',
-    textAlign: 'center'
-  },
-  descriptionStyles:{
-    fontSize: 18,
-    color: '#444',
-    textAlign: 'center',
-  
-  }
-})
 interface StorageInfo {
   totalSpace: string;
   freeSpace: string;
@@ -58,49 +41,6 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaCount, setMediaCount] = useState({ photos: 0, videos: 0 });
   const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
-
-  const groupMediaByMonth = (assets: MediaLibrary.Asset[]) => {
-    const groups = assets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
-      const date = new Date(asset.creationTime);
-      const monthYear = format(date, 'MMMM yyyy');
-      
-      if (!acc[monthYear]) {
-        acc[monthYear] = [];
-      }
-      acc[monthYear].push(asset);
-      return acc;
-    }, {});
-
-    return Object.entries(groups)
-      .map(([title, data]) => ({ title, data }))
-      .sort((a, b) => {
-        const dateA = new Date(a.data[0].creationTime);
-        const dateB = new Date(b.data[0].creationTime);
-        return dateB.getTime() - dateA.getTime();
-      });
-  };
-
-  const getMediaAssets = async () => {
-    try {
-      setIsLoading(true);
-      const media = await MediaLibrary.getAssetsAsync({
-        mediaType: ['photo', 'video'],
-        sortBy: ['creationTime'],
-      });
-      
-      setMediaAssets(media.assets);
-      setGroupedMedia(groupMediaByMonth(media.assets));
-      setMediaCount({
-        photos: media.assets.filter(asset => asset.mediaType === 'photo').length,
-        videos: media.assets.filter(asset => asset.mediaType === 'video').length
-      });
-      console.log('Media count:', media.totalCount);
-    } catch (error) {
-      console.error('Error fetching media:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getStorageInfo = async () => {
     try {
@@ -128,6 +68,62 @@ export default function Index() {
     }
   }
 
+  const groupMediaByMonth = (assets: MediaLibrary.Asset[]) => {
+    // First, ensure all assets have valid dates
+    const validAssets = assets.filter(asset => {
+      const date = new Date(asset.creationTime);
+      return !isNaN(date.getTime());
+    });
+
+    const groups = validAssets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
+      const date = new Date(asset.creationTime);
+      const monthYear = format(date, 'MMMM yyyy');
+      
+      if (!acc[monthYear]) {
+        acc[monthYear] = [];
+      }
+      acc[monthYear].push(asset);
+      return acc;
+    }, {});
+
+    // Sort groups by date (most recent first)
+    return Object.entries(groups)
+      .map(([title, data]) => ({ 
+        title, 
+        data: data.sort((a, b) => b.creationTime - a.creationTime) 
+      }))
+      .sort((a, b) => {
+        const dateA = new Date(a.data[0].creationTime);
+        const dateB = new Date(b.data[0].creationTime);
+        return dateB.getTime() - dateA.getTime();
+      });
+  };
+
+  const getMediaAssets = async () => {
+    try {
+      setIsLoading(true);
+      const media = await MediaLibrary.getAssetsAsync({
+        mediaType: ['photo', 'video'],
+        sortBy: ['creationTime'],
+        first: 1000  // Increase the limit to get more media items
+      });
+      
+      console.log('Total media items:', media.assets.length);  // Debug log
+      setMediaAssets(media.assets);
+      const grouped = groupMediaByMonth(media.assets);
+      console.log('Grouped months:', grouped.map(g => g.title));  // Debug log
+      setGroupedMedia(grouped);
+      setMediaCount({
+        photos: media.assets.filter(asset => asset.mediaType === 'photo').length,
+        videos: media.assets.filter(asset => asset.mediaType === 'video').length
+      });
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const onboardData= [
     {
       id: 1,
@@ -150,7 +146,7 @@ export default function Index() {
     }
   ]
 
-  const  [isGrant, setIsGtant] = useState(false)
+  const  [isGtant, setIsGtant] = useState(false)
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -161,7 +157,7 @@ export default function Index() {
         getStorageInfo();
         getMediaAssets();
       } else {
-        console.log("Permission denied")
+        console.log("Permission denied");
       }
     }
     checkPermissions()
@@ -182,9 +178,17 @@ export default function Index() {
   
 
   return (
-    <>
     <View style={{flex: 1}}>
-      {!isGrant && <FlatBoard
+      {/* NavBar */}
+      <View className="flex-row justify-between items-center p-4 bg-white">
+        <Text className="text-3xl font-bold">SwipeTrash</Text>
+        <TouchableOpacity className="p-2">
+          <Ionicons name="information-circle-outline"
+          
+          size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
+      {!isGtant && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
         accentColor="#000"
@@ -195,21 +199,33 @@ export default function Index() {
         descriptionStyle={styles.descriptionStyles}
         headingStyle={styles.headingStyles}
       />}
-      {isGrant && 
+      {isGtant && 
         <ScrollView className="flex-1 w-screen bg-white">
           <HomeCarousel 
             storageInfo={storageInfo} 
             mediaCount={mediaCount}
           />
-         <MonthList 
+          <MonthList 
             groupedMedia={groupedMedia}
             mediaAssets={mediaAssets}
           />
         </ScrollView>
-
-
       }
     </View>
-    </>
   );
 }
+
+
+const styles = StyleSheet.create({
+  headingStyles:{
+    fontSize: 30,
+    color: '#000',
+    textAlign: 'center'
+  },
+  descriptionStyles:{
+    fontSize: 18,
+    color: '#444',
+    textAlign: 'center',
+  
+  }
+})
