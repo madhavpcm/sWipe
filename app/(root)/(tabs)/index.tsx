@@ -54,7 +54,7 @@ export default function Index() {
     } catch (error) {
       console.error('Error getting storage info:', error);
     }
-  }
+  };
 
   const onboardData= [
     {
@@ -106,33 +106,73 @@ export default function Index() {
   }
 
   return (
-    <View style={{flex: 1}}>
-      {!isGtant && <FlatBoard
-        data={onboardData}
-        onFinish={onComplete}
-        accentColor="#000"
-        backgroundColor="#fff"
-        buttonTitle="Get Started"
-        variant="modern"
-        hideIndicator={false}
-        descriptionStyle={styles.descriptionStyles}
-        headingStyle={styles.headingStyles}
-      />}
-      {isGtant && 
-        <View className="flex-1  w-screen">
-        <View className=" items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
-          <Text className="text-2xl font-bold">Disk Usage</Text>
-        
-          <StorageChart storageInfo={storageInfo} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.headerSpacing} />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {!isGtant && <FlatBoard
+          data={onboardData}
+          onFinish={onComplete}
+          accentColor="#000"
+          backgroundColor="#fff"
+          buttonTitle="Get Started"
+          variant="modern"
+          hideIndicator={false}
+          descriptionStyle={styles.descriptionStyles}
+          headingStyle={styles.headingStyles}
+        />}
+        {isGtant && 
+          <View style={styles.cardContainer}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Disk Usage</Text>
+              <StorageChart storageInfo={storageInfo} />
+            </View>
           </View>
-        </View>
-      }
-    </View>
+        }
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+  },
+  headerSpacing: {
+    height: 80,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  cardContainer: {
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    width: '100%',
+    maxWidth: 400,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'Rubik-Medium',
+  },
   headingStyles:{
     fontSize: 30,
     color: '#000',
