@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SortingHat",
-    "displayName": "SortingHat",
+    "name": "SwipeTrash",
+    "displayName": "SwipeTrash",
     "slug": "restate",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -36,10 +36,10 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
-          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos.",
-          "isAccessMediaLocationEnabled": true,
-          "videosPermission": "Allow $(PRODUCT_NAME) to access your videos."
+          "photosPermission": "Allow SwipeTrash to access your photos.",
+          "savePhotosPermission": "Allow SwipeTrash to save photos.",
+          "videosPermission": "Allow SwipeTrash to access your videos.",
+          "isAccessMediaLocationEnabled": true
         }
       ],
       "expo-router",
@@ -74,7 +74,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "0909f432-5c43-403a-8377-6ef1738ce714"
+        "projectId": "44434107-3bb5-4004-8b92-281da94c1ee4"
       }
     }
   }

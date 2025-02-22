@@ -66,7 +66,7 @@ export default function Index() {
     } catch (error) {
       console.error('Error getting storage info:', error);
     }
-  }
+  };
 
   const groupMediaByMonth = (assets: MediaLibrary.Asset[]) => {
     // First, ensure all assets have valid dates
@@ -217,6 +217,44 @@ export default function Index() {
 
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+  },
+  headerSpacing: {
+    height: 80,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  cardContainer: {
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    width: '100%',
+    maxWidth: 400,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'Rubik-Medium',
+  },
   headingStyles:{
     fontSize: 30,
     color: '#000',
