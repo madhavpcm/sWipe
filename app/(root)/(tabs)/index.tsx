@@ -15,20 +15,28 @@ import { useFonts } from "expo-font";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
-<<<<<<< HEAD
 import HomeCarousel from '@/components/home-carousel/index';
 import { Ionicons } from '@expo/vector-icons';
 import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
-=======
 import StorageChart from '@/components/StorageChart';
-<<<<<<< HEAD
->>>>>>> 3beca6c (disk usage (#2))
-=======
 import ImageCarousel from "@/components/Carousel";
 import Carousel from "react-native-reanimated-carousel";
->>>>>>> 0a8e3e4 (basic carousel)
+import React from "react";
 
+const styles = StyleSheet.create({
+  headingStyles:{
+    fontSize: 30,
+    color: '#000',
+    textAlign: 'center'
+  },
+  descriptionStyles:{
+    fontSize: 18,
+    color: '#444',
+    textAlign: 'center',
+  
+  }
+})
 interface StorageInfo {
   totalSpace: string;
   freeSpace: string;
@@ -50,32 +58,6 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaCount, setMediaCount] = useState({ photos: 0, videos: 0 });
   const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
-
-  const getStorageInfo = async () => {
-    try {
-      const totalSpace = await FileSsystem.getTotalDiskCapacityAsync();
-      const freeSpace = await FileSsystem.getFreeDiskStorageAsync();
-      
-      // Convert bytes to GB with better precision
-      const totalGB = totalSpace / (1024 * 1024 * 1024);
-      const freeGB = freeSpace / (1024 * 1024 * 1024);
-      const usedGB = totalGB - freeGB;
-
-      setStorageInfo({
-        totalSpace: totalGB.toFixed(2),
-        freeSpace: freeGB.toFixed(2),
-        usedSpace: usedGB.toFixed(2)
-      });
-
-      console.log('Storage Info:', {
-        total: totalGB.toFixed(2),
-        free: freeGB.toFixed(2),
-        used: usedGB.toFixed(2)
-      });
-    } catch (error) {
-      console.error('Error getting storage info:', error);
-    }
-  }
 
   const groupMediaByMonth = (assets: MediaLibrary.Asset[]) => {
     const groups = assets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
@@ -168,26 +150,18 @@ export default function Index() {
     }
   ]
 
-  const  [isGtant, setIsGtant] = useState(false)
+  const  [isGrant, setIsGtant] = useState(false)
 
   useEffect(() => {
     const checkPermissions = async () => {
       const {status} = await MediaLibrary.getPermissionsAsync();
       if(status === "granted") {
-<<<<<<< HEAD
         console.log("Permission granted");
         setIsGtant(true);
         getStorageInfo();
         getMediaAssets();
       } else {
-        console.log("Permission denied");
-=======
-        console.log("Permission granted")
-        setIsGtant(true)
-        getStorageInfo()
-      } else {
         console.log("Permission denied")
->>>>>>> 3beca6c (disk usage (#2))
       }
     }
     checkPermissions()
@@ -196,7 +170,6 @@ export default function Index() {
   const onComplete = async () => {
     const {status} = await MediaLibrary.requestPermissionsAsync();
     if(status === "granted") {
-<<<<<<< HEAD
       console.log("Permission granted");
       setIsGtant(true);
       await getStorageInfo();
@@ -209,29 +182,9 @@ export default function Index() {
   
 
   return (
+    <>
     <View style={{flex: 1}}>
-      {/* NavBar */}
-      <View className="flex-row justify-between items-center p-4 bg-white">
-        <Text className="text-3xl font-bold">SwipeTrash</Text>
-        <TouchableOpacity className="p-2">
-          <Ionicons name="information-circle-outline"
-          
-          size={24} color="gray" />
-        </TouchableOpacity>
-      </View>
-=======
-      console.log("Permission granted")
-      setIsGtant(true)
-      await getStorageInfo()
-    } else {
-      console.log("Permission denied")
-    }
-  }
-
-  return (
-    <View style={{flex: 1}}>
->>>>>>> 3beca6c (disk usage (#2))
-      {!isGtant && <FlatBoard
+      {!isGrant && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
         accentColor="#000"
@@ -242,8 +195,7 @@ export default function Index() {
         descriptionStyle={styles.descriptionStyles}
         headingStyle={styles.headingStyles}
       />}
-      {isGtant && 
-<<<<<<< HEAD
+      {isGrant && 
         <ScrollView className="flex-1 w-screen bg-white">
           <HomeCarousel 
             storageInfo={storageInfo} 
@@ -254,32 +206,10 @@ export default function Index() {
             mediaAssets={mediaAssets}
           />
         </ScrollView>
-=======
-        <View className="flex-1  w-screen">
-        <View className=" items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
-          <Text className="text-2xl font-bold">Disk Usage</Text>
-        
-          <StorageChart storageInfo={storageInfo} />
-          <ImageCarousel/>
-          </View>
-        </View>
->>>>>>> 3beca6c (disk usage (#2))
+
+
       }
     </View>
+    </>
   );
 }
-
-
-const styles = StyleSheet.create({
-  headingStyles:{
-    fontSize: 30,
-    color: '#000',
-    textAlign: 'center'
-  },
-  descriptionStyles:{
-    fontSize: 18,
-    color: '#444',
-    textAlign: 'center',
-  
-  }
-})
