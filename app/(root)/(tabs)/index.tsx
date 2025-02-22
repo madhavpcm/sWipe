@@ -15,7 +15,7 @@ import { useFonts } from "expo-font";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
-import StorageChart from '@/components/StorageChart';
+import StorageChart from '@/components/home-carousel/StorageChart';
 
 interface StorageInfo {
   totalSpace: string;
@@ -29,6 +29,8 @@ export default function Index() {
     freeSpace: '0',
     usedSpace: '0'
   });
+  const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getStorageInfo = async () => {
     try {
@@ -55,6 +57,23 @@ export default function Index() {
       console.error('Error getting storage info:', error);
     }
   }
+
+  const getMediaAssets = async () => {
+    try {
+      setIsLoading(true);
+      const media = await MediaLibrary.getAssetsAsync({
+        mediaType: ['photo', 'video'],
+        sortBy: ['creationTime'],
+      })
+      
+      setMediaAssets(media.assets);
+      console.log('Media count:', media.totalCount);
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onboardData= [
     {
@@ -84,11 +103,12 @@ export default function Index() {
     const checkPermissions = async () => {
       const {status} = await MediaLibrary.getPermissionsAsync();
       if(status === "granted") {
-        console.log("Permission granted")
-        setIsGtant(true)
-        getStorageInfo()
+        console.log("Permission granted");
+        setIsGtant(true);
+        getStorageInfo();
+        getMediaAssets();
       } else {
-        console.log("Permission denied")
+        console.log("Permission denied");
       }
     }
     checkPermissions()
@@ -97,13 +117,27 @@ export default function Index() {
   const onComplete = async () => {
     const {status} = await MediaLibrary.requestPermissionsAsync();
     if(status === "granted") {
-      console.log("Permission granted")
-      setIsGtant(true)
-      await getStorageInfo()
+      console.log("Permission granted");
+      setIsGtant(true);
+      await getStorageInfo();
+      await getMediaAssets();
     } else {
-      console.log("Permission denied")
+      console.log("Permission denied");
     }
   }
+
+  const renderMediaItems = () => {
+    if (isLoading) {
+      return <Text>Loading media...</Text>;
+    }
+
+    return (
+      <View className="mt-4">
+        <Text className="text-lg font-bold mb-2">Recent Media ({mediaAssets.length})</Text>
+        {/* Add your media rendering logic here */}
+      </View>
+    );
+  };
 
   return (
     <View style={{flex: 1}}>
@@ -119,12 +153,12 @@ export default function Index() {
         headingStyle={styles.headingStyles}
       />}
       {isGtant && 
-        <View className="flex-1  w-screen">
-        <View className=" items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
-          <Text className="text-2xl font-bold">Disk Usage</Text>
-        
-          <StorageChart storageInfo={storageInfo} />
+        <View className="flex-1 w-screen bg-white">
+          <View className="items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
+            <Text className="text-2xl font-bold">Disk Usage</Text>
+            <StorageChart storageInfo={storageInfo} />
           </View>
+          {renderMediaItems()}
         </View>
       }
     </View>
