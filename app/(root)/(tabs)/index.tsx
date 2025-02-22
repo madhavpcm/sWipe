@@ -18,7 +18,7 @@ import * as FileSsystem from 'expo-file-system'
 import HomeCarousel from '@/components/home-carousel/index';
 import { Ionicons } from '@expo/vector-icons';
 import MonthList from "@/components/month-list";
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface StorageInfo {
   totalSpace: string;
@@ -69,7 +69,13 @@ export default function Index() {
   }
 
   const groupMediaByMonth = (assets: MediaLibrary.Asset[]) => {
-    const groups = assets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
+    // First, ensure all assets have valid dates
+    const validAssets = assets.filter(asset => {
+      const date = new Date(asset.creationTime);
+      return !isNaN(date.getTime());
+    });
+
+    const groups = validAssets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
       const date = new Date(asset.creationTime);
       const monthYear = format(date, 'MMMM yyyy');
       
@@ -80,8 +86,12 @@ export default function Index() {
       return acc;
     }, {});
 
+    // Sort groups by date (most recent first)
     return Object.entries(groups)
-      .map(([title, data]) => ({ title, data }))
+      .map(([title, data]) => ({ 
+        title, 
+        data: data.sort((a, b) => b.creationTime - a.creationTime) 
+      }))
       .sort((a, b) => {
         const dateA = new Date(a.data[0].creationTime);
         const dateB = new Date(b.data[0].creationTime);
@@ -95,15 +105,18 @@ export default function Index() {
       const media = await MediaLibrary.getAssetsAsync({
         mediaType: ['photo', 'video'],
         sortBy: ['creationTime'],
+        first: 1000  // Increase the limit to get more media items
       });
       
+      console.log('Total media items:', media.assets.length);  // Debug log
       setMediaAssets(media.assets);
-      setGroupedMedia(groupMediaByMonth(media.assets));
+      const grouped = groupMediaByMonth(media.assets);
+      console.log('Grouped months:', grouped.map(g => g.title));  // Debug log
+      setGroupedMedia(grouped);
       setMediaCount({
         photos: media.assets.filter(asset => asset.mediaType === 'photo').length,
         videos: media.assets.filter(asset => asset.mediaType === 'video').length
       });
-      console.log('Media count:', media.totalCount);
     } catch (error) {
       console.error('Error fetching media:', error);
     } finally {
@@ -192,7 +205,7 @@ export default function Index() {
             storageInfo={storageInfo} 
             mediaCount={mediaCount}
           />
-         <MonthList 
+          <MonthList 
             groupedMedia={groupedMedia}
             mediaAssets={mediaAssets}
           />

@@ -1,6 +1,7 @@
-import { View, Text, TouchableOpacity, Image, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, Image, ScrollView, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-media-library";
+import { useState } from "react";
 import ListItem from "react-native-flatboard/lib/components/common/ListItem";
 
 interface MediaGroup {
@@ -13,18 +14,60 @@ interface MonthListProps {
   mediaAssets: Asset[];
 }
 
+interface FilterOptions {
+  photos: boolean;
+  videos: boolean;
+}
+
 const MonthList = ({ groupedMedia, mediaAssets }: MonthListProps) => {
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    photos: true,
+    videos: true
+  });
+
+  const toggleSort = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const filteredAndSortedMedia = groupedMedia
+    .map(group => ({
+      ...group,
+      data: group.data.filter(asset => 
+        (filterOptions.photos && asset.mediaType === 'photo') ||
+        (filterOptions.videos && asset.mediaType === 'video')
+      )
+    }))
+    .filter(group => group.data.length > 0)
+    .sort((a, b) => {
+      const dateA = new Date(a.data[0].creationTime);
+      const dateB = new Date(b.data[0].creationTime);
+      return sortOrder === 'asc' 
+        ? dateA.getTime() - dateB.getTime()
+        : dateB.getTime() - dateA.getTime();
+    });
+
   return (
     <View className="flex-1 w-screen bg-white">
       <View className="flex-row justify-between items-center p-4">
         <Text className="text-2xl font-bold">Months</Text>
-        <TouchableOpacity className="p-2">
-          <Ionicons name="filter-outline" size={24} color="black" />
-        </TouchableOpacity>
+        <View className="flex-row gap-4">
+          <TouchableOpacity className="p-2" onPress={() => setShowFilterModal(true)}>
+            <Ionicons name="filter-outline" size={22} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity className="p-2" onPress={toggleSort}>
+            <Ionicons 
+              name={sortOrder === 'asc' ? "arrow-up" : "arrow-down"} 
+              size={22} 
+              color="#666" 
+            />
+          </TouchableOpacity>
+        </View>
       </View>
       
       <ScrollView>
-        {groupedMedia.map((item) => (
+        {filteredAndSortedMedia.map((item) => (
           <MonthListItem
             key={item.title}
             title={item.title}
@@ -33,6 +76,46 @@ const MonthList = ({ groupedMedia, mediaAssets }: MonthListProps) => {
           />
         ))}
       </ScrollView>
+
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <View className="bg-white rounded-t-3xl p-6">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-bold">Filter Media</Text>
+              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity 
+              className="flex-row items-center py-3"
+              onPress={() => setFilterOptions(prev => ({ ...prev, photos: !prev.photos }))}
+            >
+              <Ionicons 
+                name={filterOptions.photos ? "checkbox" : "square-outline"} 
+                size={24} 
+                color="#666" 
+              />
+              <Text className="ml-3 text-lg">Photos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className="flex-row items-center py-3"
+              onPress={() => setFilterOptions(prev => ({ ...prev, videos: !prev.videos }))}
+            >
+              <Ionicons 
+                name={filterOptions.videos ? "checkbox" : "square-outline"} 
+                size={24} 
+                color="#666" 
+              />
+              <Text className="ml-3 text-lg">Videos</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
