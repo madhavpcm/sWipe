@@ -15,12 +15,37 @@ import { useFonts } from "expo-font";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
+import HomeCarousel from '@/components/home-carousel/index';
+import { Ionicons } from '@expo/vector-icons';
+import MonthList from "@/components/month-list";
+import { format } from 'date-fns';
 import StorageChart from '@/components/StorageChart';
+import ImageCarousel from "@/components/Carousel";
+import Carousel from "react-native-reanimated-carousel";
+import React from "react";
 
+const styles = StyleSheet.create({
+  headingStyles:{
+    fontSize: 30,
+    color: '#000',
+    textAlign: 'center'
+  },
+  descriptionStyles:{
+    fontSize: 18,
+    color: '#444',
+    textAlign: 'center',
+  
+  }
+})
 interface StorageInfo {
   totalSpace: string;
   freeSpace: string;
   usedSpace: string;
+}
+
+interface MediaGroup {
+  title: string;
+  data: MediaLibrary.Asset[];
 }
 
 export default function Index() {
@@ -29,6 +54,53 @@ export default function Index() {
     freeSpace: '0',
     usedSpace: '0'
   });
+  const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [mediaCount, setMediaCount] = useState({ photos: 0, videos: 0 });
+  const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
+
+  const groupMediaByMonth = (assets: MediaLibrary.Asset[]) => {
+    const groups = assets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
+      const date = new Date(asset.creationTime);
+      const monthYear = format(date, 'MMMM yyyy');
+      
+      if (!acc[monthYear]) {
+        acc[monthYear] = [];
+      }
+      acc[monthYear].push(asset);
+      return acc;
+    }, {});
+
+    return Object.entries(groups)
+      .map(([title, data]) => ({ title, data }))
+      .sort((a, b) => {
+        const dateA = new Date(a.data[0].creationTime);
+        const dateB = new Date(b.data[0].creationTime);
+        return dateB.getTime() - dateA.getTime();
+      });
+  };
+
+  const getMediaAssets = async () => {
+    try {
+      setIsLoading(true);
+      const media = await MediaLibrary.getAssetsAsync({
+        mediaType: ['photo', 'video'],
+        sortBy: ['creationTime'],
+      });
+      
+      setMediaAssets(media.assets);
+      setGroupedMedia(groupMediaByMonth(media.assets));
+      setMediaCount({
+        photos: media.assets.filter(asset => asset.mediaType === 'photo').length,
+        videos: media.assets.filter(asset => asset.mediaType === 'video').length
+      });
+      console.log('Media count:', media.totalCount);
+    } catch (error) {
+      console.error('Error fetching media:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStorageInfo = async () => {
     try {
@@ -78,15 +150,16 @@ export default function Index() {
     }
   ]
 
-  const  [isGtant, setIsGtant] = useState(false)
+  const  [isGrant, setIsGtant] = useState(false)
 
   useEffect(() => {
     const checkPermissions = async () => {
       const {status} = await MediaLibrary.getPermissionsAsync();
       if(status === "granted") {
-        console.log("Permission granted")
-        setIsGtant(true)
-        getStorageInfo()
+        console.log("Permission granted");
+        setIsGtant(true);
+        getStorageInfo();
+        getMediaAssets();
       } else {
         console.log("Permission denied")
       }
@@ -97,17 +170,21 @@ export default function Index() {
   const onComplete = async () => {
     const {status} = await MediaLibrary.requestPermissionsAsync();
     if(status === "granted") {
-      console.log("Permission granted")
-      setIsGtant(true)
-      await getStorageInfo()
+      console.log("Permission granted");
+      setIsGtant(true);
+      await getStorageInfo();
+      await getMediaAssets();
     } else {
-      console.log("Permission denied")
+      console.log("Permission denied");
     }
   }
 
+  
+
   return (
+    <>
     <View style={{flex: 1}}>
-      {!isGtant && <FlatBoard
+      {!isGrant && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
         accentColor="#000"
@@ -118,30 +195,21 @@ export default function Index() {
         descriptionStyle={styles.descriptionStyles}
         headingStyle={styles.headingStyles}
       />}
-      {isGtant && 
-        <View className="flex-1  w-screen">
-        <View className=" items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
-          <Text className="text-2xl font-bold">Disk Usage</Text>
-        
-          <StorageChart storageInfo={storageInfo} />
-          </View>
-        </View>
+      {isGrant && 
+        <ScrollView className="flex-1 w-screen bg-white">
+          <HomeCarousel 
+            storageInfo={storageInfo} 
+            mediaCount={mediaCount}
+          />
+         <MonthList 
+            groupedMedia={groupedMedia}
+            mediaAssets={mediaAssets}
+          />
+        </ScrollView>
+
+
       }
     </View>
+    </>
   );
 }
-
-
-const styles = StyleSheet.create({
-  headingStyles:{
-    fontSize: 30,
-    color: '#000',
-    textAlign: 'center'
-  },
-  descriptionStyles:{
-    fontSize: 18,
-    color: '#444',
-    textAlign: 'center',
-  
-  }
-})
