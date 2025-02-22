@@ -23,53 +23,55 @@ import { MaterialIcons } from '@expo/vector-icons';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
-export function SwipeScreenComponent() {
-    const [mediaAssets, setMediaAssets] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [permission, setPermission] = useState(null);
+export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.Asset[]}) {
+    const [currentIndex, setCurrentIndex] = useState<number>(0);
+    const [permission, setPermission] = useState<string | null>('granted');
     const [isPlaying, setIsPlaying] = useState(false);
-    const [toDeleteAssets, setToDeleteAssets] = useState([]);
-    const [actionHistory, setActionHistory] = useState([]); // [{index: number, action: string, asset: object}]
-    const videoRef = useRef(null);
+    const [toDeleteAssets, setToDeleteAssets] = useState<Array<MediaLibrary.Asset>>([]);
+    const [actionHistory, setActionHistory] = useState<Array<{index: number, action: string, asset: MediaLibrary.Asset}>>([])
+    const videoRef = useRef<Video | null>(null);
 
     const translateX = useSharedValue(0);
+    // log mediaassets
+    console.log('Media assets:', mediaAssets);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const { status } = await MediaLibrary.requestPermissionsAsync();
-                console.log('Permission status:', status);
-                setPermission(status === 'granted');
 
-                if (status === 'granted') {
-                    const media = await MediaLibrary.getAssetsAsync({
-                        first: 50,
-                        sortBy: [MediaLibrary.SortBy.creationTime],
-                        mediaType: [
-                            MediaLibrary.MediaType.photo,
-                            MediaLibrary.MediaType.video,
-                        ],
-                    });
+    // useEffect(() => {
+    //     (async () => {
+    //         try {
+    //             const { status } = await MediaLibrary.requestPermissionsAsync();
+    //             console.log('Permission status:', status);
+    //             setPermission(status === 'granted');
 
-                    console.log('Found media assets:', media.assets.length);
-                    console.log('Total count:', media.totalCount);
+    //             if (status === 'granted') {
+    //                 const media = await MediaLibrary.getAssetsAsync({
+    //                     first: 50,
+    //                     sortBy: [MediaLibrary.SortBy.creationTime],
+    //                     mediaType: [
+    //                         MediaLibrary.MediaType.photo,
+    //                         MediaLibrary.MediaType.video,
+    //                     ],
+    //                 });
 
-                    if (media.assets.length > 0) {
-                        console.log(
-                            'First asset type:',
-                            media.assets[0].mediaType
-                        );
-                    }
+    //                 console.log('Found media assets:', media.assets.length);
+    //                 console.log('Total count:', media.totalCount);
 
-                    setMediaAssets(media.assets);
-                }
-            } catch (error) {
-                console.error('Error accessing media library:', error);
-            }
-        })();
-    }, []);
+    //                 if (media.assets.length > 0) {
+    //                     console.log(
+    //                         'First asset type:',
+    //                         media.assets[0].mediaType
+    //                     );
+    //                 }
 
-    const handleSwipeComplete = async (direction) => {
+    //                 setMediaAssets(media.assets);
+    //             }
+    //         } catch (error) {
+    //             console.error('Error accessing media library:', error);
+    //         }
+    //     })();
+    // }, []);
+
+    const handleSwipeComplete = async (direction: string) => {
         if (videoRef.current) {
             await videoRef.current.stopAsync();
             setIsPlaying(false);
@@ -79,7 +81,7 @@ export function SwipeScreenComponent() {
         handleAction(action);
     };
 
-    const handleAction = (action) => {
+    const handleAction = (action: string) => {
         const currentAsset = mediaAssets[currentIndex];
 
         // Record the action in history

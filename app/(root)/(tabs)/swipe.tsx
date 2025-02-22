@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { SwipeScreenComponent } from '@/components/screens/SwipeScreenComponent';
 
 export default function SwipeScreen() {
-  const { month } = useLocalSearchParams();
+  const { month } = useLocalSearchParams<{month: string}>();
   const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
 
   useEffect(() => {
@@ -21,8 +21,12 @@ export default function SwipeScreen() {
         // Filter assets for the selected month
         const monthAssets = media.assets.filter(asset => {
           const assetDate = new Date(asset.creationTime);
+          // need only month year like February 2025
           const assetMonth = format(assetDate, 'MMMM yyyy');
-          return assetMonth === month;
+
+          console.log(assetMonth, month);
+          
+          return assetMonth.trim() === month.trim();
         });
 
         console.log(`Found ${monthAssets.length} assets for ${month}`);
@@ -32,12 +36,12 @@ export default function SwipeScreen() {
       }
     };
 
-    loadAssets();
+     loadAssets();
   }, [month]);
 
   return (
     <>
-    <SwipeScreenComponent/>
+    <SwipeScreenComponent mediaAssets={mediaAssets} />
   </>
     // <View className="flex-1 bg-white p-4">
       
