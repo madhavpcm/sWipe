@@ -15,10 +15,14 @@ import { useFonts } from "expo-font";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
+<<<<<<< HEAD
 import HomeCarousel from '@/components/home-carousel/index';
 import { Ionicons } from '@expo/vector-icons';
 import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
+=======
+import StorageChart from '@/components/StorageChart';
+>>>>>>> 3beca6c (disk usage (#2))
 
 interface StorageInfo {
   totalSpace: string;
@@ -111,6 +115,32 @@ export default function Index() {
     }
   };
 
+  const getStorageInfo = async () => {
+    try {
+      const totalSpace = await FileSsystem.getTotalDiskCapacityAsync();
+      const freeSpace = await FileSsystem.getFreeDiskStorageAsync();
+      
+      // Convert bytes to GB with better precision
+      const totalGB = totalSpace / (1024 * 1024 * 1024);
+      const freeGB = freeSpace / (1024 * 1024 * 1024);
+      const usedGB = totalGB - freeGB;
+
+      setStorageInfo({
+        totalSpace: totalGB.toFixed(2),
+        freeSpace: freeGB.toFixed(2),
+        usedSpace: usedGB.toFixed(2)
+      });
+
+      console.log('Storage Info:', {
+        total: totalGB.toFixed(2),
+        free: freeGB.toFixed(2),
+        used: usedGB.toFixed(2)
+      });
+    } catch (error) {
+      console.error('Error getting storage info:', error);
+    }
+  }
+
   const onboardData= [
     {
       id: 1,
@@ -139,12 +169,20 @@ export default function Index() {
     const checkPermissions = async () => {
       const {status} = await MediaLibrary.getPermissionsAsync();
       if(status === "granted") {
+<<<<<<< HEAD
         console.log("Permission granted");
         setIsGtant(true);
         getStorageInfo();
         getMediaAssets();
       } else {
         console.log("Permission denied");
+=======
+        console.log("Permission granted")
+        setIsGtant(true)
+        getStorageInfo()
+      } else {
+        console.log("Permission denied")
+>>>>>>> 3beca6c (disk usage (#2))
       }
     }
     checkPermissions()
@@ -153,6 +191,7 @@ export default function Index() {
   const onComplete = async () => {
     const {status} = await MediaLibrary.requestPermissionsAsync();
     if(status === "granted") {
+<<<<<<< HEAD
       console.log("Permission granted");
       setIsGtant(true);
       await getStorageInfo();
@@ -175,6 +214,18 @@ export default function Index() {
           size={24} color="gray" />
         </TouchableOpacity>
       </View>
+=======
+      console.log("Permission granted")
+      setIsGtant(true)
+      await getStorageInfo()
+    } else {
+      console.log("Permission denied")
+    }
+  }
+
+  return (
+    <View style={{flex: 1}}>
+>>>>>>> 3beca6c (disk usage (#2))
       {!isGtant && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
@@ -187,6 +238,7 @@ export default function Index() {
         headingStyle={styles.headingStyles}
       />}
       {isGtant && 
+<<<<<<< HEAD
         <ScrollView className="flex-1 w-screen bg-white">
           <HomeCarousel 
             storageInfo={storageInfo} 
@@ -197,6 +249,15 @@ export default function Index() {
             mediaAssets={mediaAssets}
           />
         </ScrollView>
+=======
+        <View className="flex-1  w-screen">
+        <View className=" items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
+          <Text className="text-2xl font-bold">Disk Usage</Text>
+        
+          <StorageChart storageInfo={storageInfo} />
+          </View>
+        </View>
+>>>>>>> 3beca6c (disk usage (#2))
       }
     </View>
   );
