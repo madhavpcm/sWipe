@@ -1,81 +1,81 @@
 {
-  "expo": {
-    "name": "SwipeTrash",
-    "displayName": "SwipeTrash",
-    "slug": "restate",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.amalasin.restate"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "permissions": [
-        "READ_MEDIA_IMAGES",
-        "READ_MEDIA_VIDEO",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_MEDIA_LOCATION"
-      ],
-      "package": "com.amalasin.restate"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "Allow SwipeTrash to access your photos.",
-          "savePhotosPermission": "Allow SwipeTrash to save photos.",
-          "videosPermission": "Allow SwipeTrash to access your videos.",
-          "isAccessMediaLocationEnabled": true
-        }
-      ],
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash.png",
-          "resizeMode": "cover",
-          "backgroundColor": "#ffffff",
-          "enableFullScreenImage_legacy": true
-        }
-      ],
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/Rubik-Bold.ttf",
-            "./assets/fonts/Rubik-ExtraBold.ttf",
-            "./assets/fonts/Rubik-Light.ttf",
-            "./assets/fonts/Rubik-Medium.ttf",
-            "./assets/fonts/Rubik-Regular.ttf",
-            "./assets/fonts/Rubik-SemiBold.ttf"
-          ]
-        }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": true
-    },
-    "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "44434107-3bb5-4004-8b92-281da94c1ee4"
-      }
-    }
-  }
+	"expo": {
+		"name": "SwipeTrash",
+		"displayName": "SwipeTrash",
+		"slug": "swipe",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"icon": "./assets/images/icon.png",
+		"scheme": "myapp",
+		"userInterfaceStyle": "automatic",
+		"newArchEnabled": true,
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.gomodtidy.swipe"
+		},
+		"android": {
+			"adaptiveIcon": {
+				"foregroundImage": "./assets/images/icon.png",
+				"backgroundColor": "#ffffff"
+			},
+			"permissions": [
+				"READ_MEDIA_IMAGES",
+				"READ_MEDIA_VIDEO",
+				"android.permission.READ_EXTERNAL_STORAGE",
+				"android.permission.WRITE_EXTERNAL_STORAGE",
+				"android.permission.ACCESS_MEDIA_LOCATION"
+			],
+			"package": "com.gomodtidy.swipe"
+		},
+		"web": {
+			"bundler": "metro",
+			"output": "static",
+			"favicon": "./assets/images/favicon.png"
+		},
+		"plugins": [
+			[
+				"expo-media-library",
+				{
+					"photosPermission": "Allow SwipeTrash to access your photos.",
+					"savePhotosPermission": "Allow SwipeTrash to save photos.",
+					"videosPermission": "Allow SwipeTrash to access your videos.",
+					"isAccessMediaLocationEnabled": true
+				}
+			],
+			"expo-router",
+			[
+				"expo-splash-screen",
+				{
+					"image": "./assets/images/splash.png",
+					"resizeMode": "cover",
+					"backgroundColor": "#ffffff",
+					"enableFullScreenImage_legacy": true
+				}
+			],
+			[
+				"expo-font",
+				{
+					"fonts": [
+						"./assets/fonts/Rubik-Bold.ttf",
+						"./assets/fonts/Rubik-ExtraBold.ttf",
+						"./assets/fonts/Rubik-Light.ttf",
+						"./assets/fonts/Rubik-Medium.ttf",
+						"./assets/fonts/Rubik-Regular.ttf",
+						"./assets/fonts/Rubik-SemiBold.ttf"
+					]
+				}
+			]
+		],
+		"experiments": {
+			"typedRoutes": true
+		},
+		"extra": {
+			"router": {
+				"origin": false
+			},
+			"eas": {
+				"projectId": "44434107-3bb5-4004-8b92-281da94c1ee4"
+			}
+		}
+	}
 }

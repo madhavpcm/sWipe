@@ -1,4 +1,4 @@
-package com.amalasin.restate
+package com.gomodtidy.swipe
 
 import android.app.Application
 import android.content.res.Configuration
