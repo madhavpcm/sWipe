@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.amalasin.restate'
+    namespace 'com.gomodtidy.swipe'
     defaultConfig {
-        applicationId 'com.amalasin.restate'
+        applicationId 'com.gomodtidy.swipe'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -174,4 +174,17 @@ dependencies {
         implementation jscFlavor
     }
     implementation project(':react-native-delete-media')
+}
+
+android {
+    namespace 'com.gomodtidy.swipe'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.gomodtidy.swipe'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "0.0.1"
+    }
 }
