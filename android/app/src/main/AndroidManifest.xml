@@ -32,6 +32,7 @@
         <data android:scheme="myapp"/>
         <data android:scheme="com.amalasin.restate"/>
         <data android:scheme="exp+restate"/>
+        <data android:scheme="exp+swipe"/>
       </intent-filter>
     </activity>
   </application>

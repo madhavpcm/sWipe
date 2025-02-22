@@ -3,9 +3,8 @@ import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-export default function RootLayout() {
+export default function Layout() {
   const router = useRouter();
-
   return (
     <Stack 
       screenOptions={{
