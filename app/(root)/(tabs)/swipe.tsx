@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import { format } from 'date-fns';
-
+import {TinderSwiper} from '@/components/tinder-swiper';
 export default function SwipeScreen() {
   const { month } = useLocalSearchParams();
   const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
@@ -11,7 +11,7 @@ export default function SwipeScreen() {
   useEffect(() => {
     const loadAssets = async () => {
       try {
-        const media = await MediaLibrary.getAssetsAsync({
+         const media = await MediaLibrary.getAssetsAsync({
           mediaType: ['photo', 'video'],
           sortBy: ['creationTime'],
           first: 1000 // Adjust this number as needed
@@ -35,9 +35,11 @@ export default function SwipeScreen() {
   }, [month]);
 
   return (
-    <View className="flex-1 bg-white p-4">
-      <Text className="text-xl font-bold mb-2">{month}</Text>
-      <Text className="text-base">Number of assets: {mediaAssets.length}</Text>
+    <View className="flex-1 bg-white">
+      <TinderSwiper
+      data={mediaAssets}
+
+      />
     </View>
   );
 }

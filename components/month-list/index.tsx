@@ -58,10 +58,9 @@ const MonthListItem = ({ title, data, mediaAssets }: { title: string, data: Asse
 
   const handlePress = () => {
     router.push({
-      pathname: "/swipe",
+      pathname: "/(root)/swipe",
       params: {
         month: title,
-        
       }
     });
   };
