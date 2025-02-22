@@ -16,11 +16,20 @@ import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
 import StorageChart from '@/components/home-carousel/StorageChart';
+import HomeCarousel from "@/components/home-carousel";
+import MonthList from "@/components/month-list";
+import { format } from 'date-fns';
+import Header from "@/components/Header";
 
 interface StorageInfo {
   totalSpace: string;
   freeSpace: string;
   usedSpace: string;
+}
+
+interface MediaGroup {
+  title: string;
+  data: MediaLibrary.Asset[];
 }
 
 export default function Index() {
@@ -31,6 +40,7 @@ export default function Index() {
   });
   const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
 
   const getStorageInfo = async () => {
     try {
@@ -64,15 +74,31 @@ export default function Index() {
       const media = await MediaLibrary.getAssetsAsync({
         mediaType: ['photo', 'video'],
         sortBy: ['creationTime'],
-      })
+      });
       
       setMediaAssets(media.assets);
-      console.log('Media count:', media.totalCount);
+      const grouped = groupMediaByMonth(media.assets);
+      setGroupedMedia(grouped);
     } catch (error) {
       console.error('Error fetching media:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const groupMediaByMonth = (assets: MediaLibrary.Asset[]): MediaGroup[] => {
+    const groups = assets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
+      const date = new Date(asset.creationTime);
+      const monthYear = format(date, 'MMMM yyyy');
+      
+      if (!acc[monthYear]) {
+        acc[monthYear] = [];
+      }
+      acc[monthYear].push(asset);
+      return acc;
+    }, {});
+
+    return Object.entries(groups).map(([title, data]) => ({ title, data }));
   };
 
   const onboardData= [
@@ -126,21 +152,9 @@ export default function Index() {
     }
   }
 
-  const renderMediaItems = () => {
-    if (isLoading) {
-      return <Text>Loading media...</Text>;
-    }
-
-    return (
-      <View className="mt-4">
-        <Text className="text-lg font-bold mb-2">Recent Media ({mediaAssets.length})</Text>
-        {/* Add your media rendering logic here */}
-      </View>
-    );
-  };
-
   return (
     <View style={{flex: 1}}>
+      <Header />
       {!isGtant && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
@@ -153,12 +167,18 @@ export default function Index() {
         headingStyle={styles.headingStyles}
       />}
       {isGtant && 
-        <View className="flex-1 w-screen bg-white">
-          <View className="items-center justify-center flex-col gap-4 bg-white p-6 mx-3 my-3 rounded-md shadow-xl">
-            <Text className="text-2xl font-bold">Disk Usage</Text>
-            <StorageChart storageInfo={storageInfo} />
-          </View>
-          {renderMediaItems()}
+        <View className="flex-1 bg-white">
+          <HomeCarousel 
+            storageInfo={storageInfo} 
+            mediaCount={{
+              photos: mediaAssets.filter(a => a.mediaType === 'photo').length,
+              videos: mediaAssets.filter(a => a.mediaType === 'video').length
+            }}
+          />
+          <MonthList 
+            groupedMedia={groupedMedia}
+            mediaAssets={mediaAssets}
+          />
         </View>
       }
     </View>

@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
-import { PieChart } from 'react-native-gifted-charts';
+import CircularProgress from 'react-native-circular-progress-indicator';
+import { useMemo } from 'react';
 
 interface StorageInfo {
   totalSpace: string;
@@ -12,54 +13,43 @@ interface StorageChartProps {
 }
 
 export default function StorageChart({ storageInfo }: StorageChartProps) {
-  const data = [
-    {
-      value: parseFloat(storageInfo.usedSpace),
-      color: '#FF6B6B',
-      text: 'Used',
-      focused: true,
-      shiftRadius: 3
-    },
-    {
-      value: parseFloat(storageInfo.freeSpace),
-      color: '#51CF66',
-      text: 'Free'
-    },
-  ];
+  const usedPercentage = useMemo(() => {
+    const total = parseFloat(storageInfo.totalSpace);
+    const used = parseFloat(storageInfo.usedSpace);
+    return Math.round((used / total) * 100);
+  }, [storageInfo]);
 
   return (
-    <View className="flex-row items-center justify-center gap-4">
-      <PieChart
-        data={data}
-        donut
-        showText={false}
-        radius={80}
-        innerRadius={60}
-        focusOnPress
-        isAnimated = {true} 
-        animationDuration={1000}
-        initialAngle={-90}
-        centerLabelComponent={() => (
-          <View className="items-center">
-            <Text className="text-lg font-bold">{storageInfo.totalSpace}</Text>
-            <Text className="text-xs">Total GB</Text>
+    <View className="items-center py-4">
+      <Text className="text-base font-medium text-gray-500 mb-4">Storage Overview</Text>
+      <View className="flex-row items-center gap-8">
+        <CircularProgress
+          value={usedPercentage}
+          radius={60}
+          duration={2000}
+          progressValueColor={'#1a1a1a'}
+          maxValue={100}
+          valueSuffix={'%'}
+          activeStrokeColor={'#FF6B6B'}
+          inActiveStrokeColor={'#51CF66'}
+          inActiveStrokeOpacity={0.2}
+          inActiveStrokeWidth={6}
+          activeStrokeWidth={12}
+        />
+        <View className="gap-4">
+          <View>
+            <Text className="text-sm text-gray-500">Total Space</Text>
+            <Text className="text-lg font-bold">{storageInfo.totalSpace} GB</Text>
           </View>
-        )}
-        shadowColor={'#00000020'}
-        shadowWidth={2}
-        strokeWidth={1}
-        strokeColor={'#ffffff'}
-      />
-      <View className="gap-3">
-        {data.map((item, index) => (
-          <View key={index} className="flex-row items-center gap-2">
-            <View style={{ backgroundColor: item.color }} className="w-3 h-3 rounded-full" />
-            <View>
-              <Text className="font-medium text-sm">{item.text}</Text>
-              <Text className="text-gray-600 text-xs">{item.value.toFixed(2)} GB</Text>
-            </View>
+          <View>
+            <Text className="text-sm text-gray-500">Used Space</Text>
+            <Text className="text-lg font-bold text-red-400">{storageInfo.usedSpace} GB</Text>
           </View>
-        ))}
+          <View>
+            <Text className="text-sm text-gray-500">Free Space</Text>
+            <Text className="text-lg font-bold text-green-500">{storageInfo.freeSpace} GB</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
