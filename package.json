@@ -18,7 +18,7 @@
     "@expo/vector-icons": "^14.0.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
-    "eas-cli": "^15.0.10",
+    "eas-cli": "^15.0.12",
     "expo": "~52.0.23",
     "expo-av": "~15.0.2",
     "expo-blur": "~14.0.1",
