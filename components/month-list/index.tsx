@@ -1,107 +1,148 @@
-import { 
-  View, 
-  Text, 
-  TouchableNativeFeedback, 
-  Image, 
-  ScrollView,
-  Platform,
-  TouchableOpacity,
-  FlatList
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Asset } from "expo-media-library";
-import ListItem from "react-native-flatboard/lib/components/common/ListItem";
-import { useRouter } from "expo-router";
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, ActivityIndicator, Image, StyleSheet } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
 
-interface MediaGroup {
-  title: string;
-  data: Asset[];
+// Define types
+interface MediaAsset {
+  id: string;
+  filename: string;
+  creationTime: number;
+  mediaType: 'photo' | 'video';
+  uri: string;
 }
 
-interface MonthListProps {
-  groupedMedia: MediaGroup[];
-  mediaAssets: Asset[];
+interface MonthMedia {
+  month: string;
+  media: MediaAsset[];
 }
 
-const MonthList = ({ groupedMedia, mediaAssets }: MonthListProps) => {
-  return (
-    <View className="flex-1 bg-white">
-      <View className="flex-row justify-between items-center px-4 py-2">
-        <Text className="text-2xl font-bold">Your Media</Text>
-        <TouchableOpacity className="p-2">
-          <Ionicons name="filter-outline" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-      
-      <FlatList
-        data={groupedMedia}
-        keyExtractor={(item) => item.title}
-        renderItem={({ item }) => (
-          <MonthListItem
-            title={item.title}
-            data={item.data}
-            mediaAssets={mediaAssets}
-          />
-        )}
-        contentContainerStyle={{ padding: 16 }}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={true}
-      />
-    </View>
-  );
-};
+// Custom hook for paginated media fetching
+const usePaginatedMedia = () => {
+  const [mediaByMonth, setMediaByMonth] = useState<MonthMedia[]>([]);
+  const [monthsFetched, setMonthsFetched] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const monthsToLoad = 5; // Load 5 months at a time
 
-export default MonthList;
+  useEffect(() => {
+    fetchNextMonths(); // Load initial data
+  }, []);
 
-const MonthListItem = ({ title, data, mediaAssets }: { title: string, data: Asset[], mediaAssets: Asset[] }) => {
-  const router = useRouter();
-
-  const handlePress = () => {
-    router.push({
-      pathname: "/swipe",
-      params: {
-        month: title,
-        
-      }
+  // Fetch first 5 images for a given year and month
+  const fetchMediaForMonth = async (year: number, month: number): Promise<MediaAsset[]> => {
+    const result = await MediaLibrary.getAssetsAsync({
+      mediaType: ['photo', 'video'],
+      sortBy: [['creationTime', false]], // Newest first
+      first: 100, // Fetch more to filter later
     });
+
+    return result.assets
+      .filter((asset) => {
+        const assetDate = new Date(asset.creationTime);
+        return assetDate.getFullYear() === year && assetDate.getMonth() + 1 === month;
+      })
+      .slice(0, 5) // Only 5 per month
+      .map((asset) => ({
+        id: asset.id,
+        filename: asset.filename,
+        creationTime: asset.creationTime,
+        mediaType: asset.mediaType as 'photo' | 'video',
+        uri: asset.uri,
+      }));
   };
 
+  // Fetch the next 5 months of media
+  const fetchNextMonths = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Permission denied');
+      setLoading(false);
+      return;
+    }
+
+    let currentDate = new Date();
+    let newMonths: MonthMedia[] = [];
+
+    if (monthsFetched.length > 0) {
+      const lastMonth = monthsFetched[monthsFetched.length - 1].split('-');
+      currentDate = new Date(parseInt(lastMonth[0]), parseInt(lastMonth[1]) - 1, 1);
+    }
+
+    for (let i = 0; i < monthsToLoad; i++) {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+
+      if (monthsFetched.includes(monthKey)) {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        continue;
+      }
+
+      const media = await fetchMediaForMonth(year, month);
+      if (media.length > 0) {
+        newMonths.push({ month: monthKey, media });
+      }
+
+      setMonthsFetched((prev) => [...prev, monthKey]);
+      currentDate.setMonth(currentDate.getMonth() - 1);
+    }
+
+    setMediaByMonth((prev) => [...prev, ...newMonths]);
+    if (newMonths.length < monthsToLoad) setHasMore(false);
+    setLoading(false);
+  };
+
+  return { mediaByMonth, fetchNextMonths, loading, hasMore };
+};
+
+// **FlatList Component**
+const MediaGallery: React.FC = () => {
+  const { mediaByMonth, fetchNextMonths, loading, hasMore } = usePaginatedMedia();
+
   return (
-    <TouchableNativeFeedback
-      background={TouchableNativeFeedback.Ripple('#00000010', false)}
-      useForeground
-      onPress={handlePress}
-    >
-      <View className="bg-white rounded-xl mb-4 overflow-hidden">
-        <View className="flex-row justify-between items-center p-4 border-b border-gray-100">
-          <Text className="text-lg font-medium text-gray-900">{title}</Text>
-          <Text className="text-sm text-gray-500">{data.length} items</Text>
+    <FlatList
+      data={mediaByMonth}
+      keyExtractor={(item) => item.month}
+      renderItem={({ item }) => (
+        <View style={styles.monthContainer}>
+          <Text style={styles.monthText}>📅 {item.month}</Text>
+          <FlatList
+            data={item.media}
+            keyExtractor={(media) => media.id}
+            horizontal
+            renderItem={({ item: media }) => (
+              <Image source={{ uri: media.uri }} style={styles.image} />
+            )}
+          />
         </View>
-        <View className="flex-row p-4">
-          {data.slice(0, 4).map((asset, index) => (
-            <View 
-              key={asset.id} 
-              className="w-20 h-20 rounded-lg overflow-hidden mr-2"
-            >
-              <Image
-                source={{ uri: asset.uri }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-              {asset.mediaType === 'video' && (
-                <View className="absolute right-1 top-1">
-                  <Ionicons name="play-circle" size={16} color="white" />
-                </View>
-              )}
-            </View>
-          ))}
-          {data.length > 4 && (
-            <View className="w-20 h-20 rounded-lg bg-gray-100 items-center justify-center">
-              <Text className="text-sm font-medium text-gray-600">+{data.length - 4}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </TouchableNativeFeedback>
+      )}
+      onEndReached={hasMore ? fetchNextMonths : null}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null}
+    />
   );
 };
+
+export default MediaGallery;
+
+// **Styles**
+const styles = StyleSheet.create({
+  monthContainer: {
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  monthText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  image: {
+    width: 80,
+    height: 80,
+    margin: 5,
+    borderRadius: 8,
+  },
+});

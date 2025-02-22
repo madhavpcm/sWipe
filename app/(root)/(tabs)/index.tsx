@@ -73,7 +73,8 @@ export default function Index() {
       setIsLoading(true);
       const media = await MediaLibrary.getAssetsAsync({
         mediaType: ['photo', 'video'],
-        sortBy: ['creationTime'],
+        sortBy: [['creationTime', false]], // Newest first
+        first: 5
       });
       
       setMediaAssets(media.assets);
@@ -127,7 +128,8 @@ export default function Index() {
 
   useEffect(() => {
     const checkPermissions = async () => {
-      const {status} = await MediaLibrary.getPermissionsAsync();
+      const {status} = await MediaLibrary.getPermissionsAsync(
+      );
       if(status === "granted") {
         console.log("Permission granted");
         setIsGtant(true);
@@ -176,10 +178,7 @@ export default function Index() {
               videos: mediaAssets.filter(a => a.mediaType === 'video').length
             }}
           />
-          <MonthList 
-            groupedMedia={groupedMedia}
-            mediaAssets={mediaAssets}
-          />
+          <MonthList />
         </View>
       }
     </View>
