@@ -141,9 +141,10 @@ export default function Index() {
   }, [])
 
   const onComplete = async () => {
-    const {status} = await MediaLibrary.requestPermissionsAsync();
+    const {status, accessPrivileges} = await MediaLibrary.requestPermissionsAsync();
+
     if(status === "granted") {
-      console.log("Permission granted");
+      console.log("Permission granted:", accessPrivileges);
       setIsGtant(true);
       await getStorageInfo();
       await getMediaAssets();

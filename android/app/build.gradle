@@ -173,4 +173,5 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    implementation project(':react-native-delete-media')
 }

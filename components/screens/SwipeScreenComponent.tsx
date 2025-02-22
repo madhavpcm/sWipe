@@ -20,22 +20,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
+import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
-const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
-    if (assets.length > 0) {
-      try {
-        await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
-        Alert.alert('Deleted', 'Selected media files have been deleted');
-      } catch (error) {
-        Alert.alert('Error', 'Failed to delete assets');
-      }
-    } else {
-      Alert.alert('No media', 'No assets available to delete');
-    }
-  };
 
 export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.Asset[]}) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -48,6 +37,73 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
     const translateX = useSharedValue(0);
     // log mediaassets
     console.log('Media assets:', mediaAssets);
+
+const cleanupImageReferences = async (uri: string) => {
+    if(!uri) return false;
+    try {
+      // Clear from Image component cache
+      Image.resolveAssetSource({ uri });
+      return true;
+    } catch (error) {
+      console.error('Error cleaning up image reference:', error);
+      return false;
+    }
+  };
+
+const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
+    if (assets.length > 0) {
+      try {
+
+    //     await Promise.all(assets.map(asset => cleanupImageReferences(asset?.uri)));
+
+    //   // Wait a bit to ensure cleanup is complete
+    //     await new Promise(resolve => setTimeout(resolve, 300));
+
+    //   // Clear any cached images from the current view
+    //   setCurrentIndex(prevIndex => {
+    //     if (prevIndex >= mediaAssets.length - 1) {
+    //       return mediaAssets.length - 2;
+    //     }
+    //     return prevIndex;
+    //   });
+
+    //   // Remove from animated view if present
+    //   translateX.value = 0;
+
+    //   // Clear from display before deletion
+    //   renderMediaItem();
+
+    //   // Force a render cycle
+    //   await new Promise(resolve => setTimeout(resolve, 100));
+
+        // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
+        const result = DeleteMedia.deletePhotos(assets.map(asset => asset.uri))
+        .then(() => {
+          console.log("Image deleted");
+        })
+        .catch((e) => {
+          const message = e.message;
+          const code: ErrorCodes = e.code;
+    
+          switch (code) {
+            case "ERROR_USER_REJECTED":
+              console.log("Image deletion denied by user");
+              break;
+            default:
+              console.log(message);
+              break;
+          }
+        });
+        console.log('Deleted assets:', result);
+        Alert.alert('Deleted', 'Selected media files have been deleted');
+      } catch (error) {
+        console.error('Error deleting assets:', error);
+        Alert.alert('Error', 'Failed to delete assets');
+      }
+    } else {
+      Alert.alert('No media', 'No assets available to delete');
+    }
+  };
 
 
     // useEffect(() => {
@@ -241,6 +297,7 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
         const previousAsset = mediaAssets[currentIndex - 1] || null;
         const nextAsset = mediaAssets[currentIndex + 1] || null;
 
+        // Clean up any previously loaded images
         return (
             <View style={styles.mediaContainer}>
                 {previousAsset && (
@@ -248,6 +305,7 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
                         source={{ uri: previousAsset.uri }}
                         style={[styles.image, styles.previousImage]}
                         resizeMode="cover"
+                        onLoadEnd={() => cleanupImageReferences(previousAsset?.uri)}
                     />
                 )}
                 {currentAsset && (
@@ -258,6 +316,7 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
                             source={{ uri: currentAsset.uri }}
                             style={styles.image}
                             resizeMode="cover"
+                            onLoadEnd={() => cleanupImageReferences(previousAsset?.uri)}
                         />
                     </Animated.View>
                 )}
@@ -266,6 +325,7 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
                         source={{ uri: nextAsset.uri }}
                         style={[styles.image, styles.nextImage]}
                         resizeMode="cover"
+                        onLoadEnd={() => cleanupImageReferences(previousAsset?.uri)}
                     />
                 )}
             </View>
