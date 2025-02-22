@@ -22,7 +22,12 @@ import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
 =======
 import StorageChart from '@/components/StorageChart';
+<<<<<<< HEAD
 >>>>>>> 3beca6c (disk usage (#2))
+=======
+import ImageCarousel from "@/components/Carousel";
+import Carousel from "react-native-reanimated-carousel";
+>>>>>>> 0a8e3e4 (basic carousel)
 
 interface StorageInfo {
   totalSpace: string;
@@ -255,6 +260,7 @@ export default function Index() {
           <Text className="text-2xl font-bold">Disk Usage</Text>
         
           <StorageChart storageInfo={storageInfo} />
+          <ImageCarousel/>
           </View>
         </View>
 >>>>>>> 3beca6c (disk usage (#2))
