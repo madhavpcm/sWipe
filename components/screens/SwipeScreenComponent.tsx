@@ -51,8 +51,13 @@ const cleanupImageReferences = async (uri: string) => {
   };
 
 const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
-    if (assets.length > 0) {
-      try {
+    // handle null assets
+    if (!assets || assets.length === 0){
+    Alert.alert('No media', 'No assets available to delete');
+    return;
+  }
+
+    try {
 
     //     await Promise.all(assets.map(asset => cleanupImageReferences(asset?.uri)));
 
@@ -77,7 +82,9 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
     //   await new Promise(resolve => setTimeout(resolve, 100));
 
         // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
-        const result = DeleteMedia.deletePhotos(assets.map(asset => asset.uri))
+        const nonNullAssetsUri = assets.filter(asset => asset !== null).map(asset => asset.uri).filter(uri => uri !== null);
+        console.log('DeleteMedia:', DeleteMedia);
+        const result =  DeleteMedia.deletePhotos(nonNullAssetsUri)
         .then(() => {
           console.log("Image deleted");
         })
@@ -100,9 +107,7 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         console.error('Error deleting assets:', error);
         Alert.alert('Error', 'Failed to delete assets');
       }
-    } else {
-      Alert.alert('No media', 'No assets available to delete');
-    }
+    
   };
 
 
