@@ -82,8 +82,10 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
     //   await new Promise(resolve => setTimeout(resolve, 100));
 
         // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
+        const util = require('util')
         const nonNullAssetsUri = assets.filter(asset => asset !== null).map(asset => asset.uri).filter(uri => uri !== null);
-        console.log('DeleteMedia:', DeleteMedia);
+        // console.log('DeleteMedia:', DeleteMedia);
+        console.log(util.inspect(DeleteMedia, false, null, true /* enable colors */))
         const result =  DeleteMedia.deletePhotos(nonNullAssetsUri)
         .then(() => {
           console.log("Image deleted");
