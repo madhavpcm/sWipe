@@ -21,12 +21,16 @@ import Animated, {
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
-
+import { useRouter } from 'expo-router';
+type MediaStats = {
+    month: string;
+    mediaCount: number;
+  };
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
 
-export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.Asset[]}) {
+export function SwipeScreenComponent({mediaAssets, month}:{mediaAssets: MediaLibrary.Asset[],  month:string}) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [permission, setPermission] = useState<string | null>('granted');
     const [isPlaying, setIsPlaying] = useState(false);
@@ -37,6 +41,8 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
     const translateX = useSharedValue(0);
     // log mediaassets
     console.log('Media assets:', mediaAssets);
+    const router = useRouter();
+
 
 const cleanupImageReferences = async (uri: string) => {
     if(!uri) return false;
@@ -51,8 +57,13 @@ const cleanupImageReferences = async (uri: string) => {
   };
 
 const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
-    if (assets.length > 0) {
-      try {
+    // handle null assets
+    if (!assets || assets.length === 0){
+    Alert.alert('No media', 'No assets available to delete');
+    return;
+  }
+
+    try {
 
     //     await Promise.all(assets.map(asset => cleanupImageReferences(asset?.uri)));
 
@@ -77,7 +88,11 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
     //   await new Promise(resolve => setTimeout(resolve, 100));
 
         // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
-        const result = DeleteMedia.deletePhotos(assets.map(asset => asset.uri))
+        const util = require('util')
+        const nonNullAssetsUri = assets.filter(asset => asset !== null).map(asset => asset.uri).filter(uri => uri !== null);
+        // console.log('DeleteMedia:', DeleteMedia);
+        console.log(util.inspect(DeleteMedia, false, null, true /* enable colors */))
+        const result =  DeleteMedia.deletePhotos(nonNullAssetsUri)
         .then(() => {
           console.log("Image deleted");
         })
@@ -96,13 +111,18 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         });
         console.log('Deleted assets:', result);
         Alert.alert('Deleted', 'Selected media files have been deleted');
+        router.push({
+            pathname: "/",
+            params: {
+                month: month, // Pass as a string
+                mediaCount: mediaAssets.length - toDeleteAssets.length, // Pass as a number
+            }
+        });
       } catch (error) {
         console.error('Error deleting assets:', error);
         Alert.alert('Error', 'Failed to delete assets');
       }
-    } else {
-      Alert.alert('No media', 'No assets available to delete');
-    }
+    
   };
 
 

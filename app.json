@@ -1,6 +1,7 @@
 {
 	"expo": {
 		"name": "SwipeTrash",
+		"owner": "gomodtidy2",
 		"displayName": "SwipeTrash",
 		"slug": "swipe",
 		"version": "1.0.0",
@@ -74,7 +75,7 @@
 				"origin": false
 			},
 			"eas": {
-				"projectId": "44434107-3bb5-4004-8b92-281da94c1ee4"
+				"projectId": "e109229a-a158-4218-9dd8-c6703215f3ee"
 			}
 		}
 	}

@@ -28,13 +28,13 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>myapp</string>
-          <string>com.amalasin.restate</string>
+          <string>com.gomodtidy.swipe</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+restate</string>
+          <string>exp+swipe</string>
         </array>
       </dict>
     </array>
