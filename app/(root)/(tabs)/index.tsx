@@ -140,14 +140,14 @@ export default function Index() {
       }
     }
     checkPermissions()
-    // console.log("Ninte thantha..")
   }, [])
 
   useEffect(() => {
     if (mediaCount) {
-      const localMonthToMediaCount = monthToMediaCount
-      localMonthToMediaCount[month] = Number(mediaCount)
-      setMonthToMediaCount(localMonthToMediaCount)
+      setMonthToMediaCount(prev => ({
+        ...prev,
+        [month]: Number(mediaCount)
+      }));
     }
   }, [mediaCount]);
 
@@ -167,7 +167,7 @@ export default function Index() {
   return (
     <View style={{flex: 1}}>
       <Header />
-      {!isGtant && <FlatBoard
+       {!isGtant && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
         accentColor="#000"
@@ -193,13 +193,13 @@ export default function Index() {
               videos: mediaAssets.filter(a => a.mediaType === 'video').length
             }}
           />
-          <MonthList 
+          {!isLoading && <MonthList 
             groupedMedia={groupedMedia}
             mediaAssets={mediaAssets}
             setMonthToMediaCount={setMonthToMediaCount}
             monthToMediaCount={monthToMediaCount}
-            isLoading={isLoading}
-          />
+            
+          />}
         </View>
       }
     </View>
