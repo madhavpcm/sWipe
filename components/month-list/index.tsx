@@ -72,36 +72,36 @@ const MonthListItem = ({ title, data, mediaAssets }: { title: string, data: Asse
       useForeground
       onPress={handlePress}
     >
-      <View className="bg-white rounded-xl mb-4 overflow-hidden">
-        <View className="flex-row justify-between items-center p-4 border-b border-gray-100">
-          <Text className="text-lg font-medium text-gray-900">{title}</Text>
-          <Text className="text-sm text-gray-500">{data.length} items</Text>
+      <View
+      className="bg-white flex gap-4 flex-row items-center border-b border-gray-200 py-2"
+      >
+        <View
+        className="p-3 bg-green-200 flex items-center  justify-center rounded-full"
+        >
+
+    
+        <Ionicons
+        name="folder"
+        size={24}
+        color={"#60a512"}
+        />
         </View>
-        <View className="flex-row p-4">
-          {data.slice(0, 4).map((asset, index) => (
-            <View 
-              key={asset.id} 
-              className="w-20 h-20 rounded-lg overflow-hidden mr-2"
-            >
-              <Image
-                source={{ uri: asset.uri }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-              {asset.mediaType === 'video' && (
-                <View className="absolute right-1 top-1">
-                  <Ionicons name="play-circle" size={16} color="white" />
-                </View>
-              )}
-            </View>
-          ))}
-          {data.length > 4 && (
-            <View className="w-20 h-20 rounded-lg bg-gray-100 items-center justify-center">
-              <Text className="text-sm font-medium text-gray-600">+{data.length - 4}</Text>
-            </View>
-          )}
+        <View>
+        <Text
+className="font-semibold"
+>
+
+ {title}
+</Text>
+<Text
+className="text-sm font-light text-muted-foreground"
+>
+  {data.length} items
+</Text>
         </View>
+
       </View>
+      
     </TouchableNativeFeedback>
   );
 };
