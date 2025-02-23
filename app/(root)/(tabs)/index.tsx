@@ -22,6 +22,43 @@ import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
 import Header from "@/components/Header";
 
+import  PermissionsAndroid  from 'react-native-permissions';
+  
+  const requestWriteStoragePermission = async () => {
+    try {
+      console.log("requesting perms for native")
+      const rgranted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
+        {
+          title: 'Storage Permission',
+          message: 'This app needs access to your storage to save files.',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      const wgranted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Storage Permission',
+          message: 'This app needs access to your storage to save files.',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+  
+      if (rgranted === PermissionsAndroid.RESULTS.GRANTED && wgranted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('R/Write External Storage Permission Granted');
+        return true;
+      } else {
+        console.log('R/Write External Storage Permission Denied', rgranted, wgranted);
+        return false;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+  
 interface StorageInfo {
   totalSpace: string;
   freeSpace: string;
@@ -128,10 +165,13 @@ export default function Index() {
   const  [isGtant, setIsGtant] = useState(false)
 
   useEffect(() => {
+  
+
     const checkPermissions = async () => {
+      await requestWriteStoragePermission()
       const {status} = await MediaLibrary.getPermissionsAsync();
       if(status === "granted") {
-        console.log("Permission granted");
+        console.log("Permission granted for expo");
         setIsGtant(true);
         getStorageInfo();
         getMediaAssets();

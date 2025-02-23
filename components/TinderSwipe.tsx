@@ -1,166 +1,264 @@
 import * as React from 'react';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TinderCard } from 'rn-tinder-card';
 import * as MediaLibrary from 'expo-media-library';
-import { useRouter } from 'expo-router';
+import { ActionButton } from './ActionButton';
 import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
 
 
+const { width, height } = Dimensions.get('window');
 
-export const TinderSwipe = ({ month, mediaAssets }: { month: string, mediaAssets: MediaLibrary.Asset[] }) => {
-  const router = useRouter();
-  
-  const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
-    // handle null assets
-    if (!assets || assets.length === 0){
-    Alert.alert('No media', 'No assets available to delete');
-    return;
-  }
-
-    try {
-
-  //     await Promise.all(assets.map(asset => cleanupImageReferences(asset?.uri)));
-
-  //   // Wait a bit to ensure cleanup is complete
-  //     await new Promise(resolve => setTimeout(resolve, 300));
-
-  //   // Clear any cached images from the current view
-  //   setCurrentIndex(prevIndex => {
-  //     if (prevIndex >= mediaAssets.length - 1) {
-  //       return mediaAssets.length - 2;
-  //     }
-  //     return prevIndex;
-  //   });
-
-  //   // Remove from animated view if present
-  //   translateX.value = 0;
-
-  //   // Clear from display before deletion
-  //   renderMediaItem();
-
-  //   // Force a render cycle
-  //   await new Promise(resolve => setTimeout(resolve, 100));
-
-      // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
-      const util = require('util')
-      const nonNullAssetsUri = assets.filter(asset => asset !== null).map(asset => asset.uri).filter(uri => uri !== null);
-      // console.log('DeleteMedia:', DeleteMedia);
-      console.log(util.inspect(DeleteMedia, false, null, true /* enable colors */))
-      const result =  DeleteMedia.deletePhotos(nonNullAssetsUri)
-      .then(() => {
-        console.log("Image deleted");
-      })
-      .catch((e) => {
-        const message = e.message;
-        const code: ErrorCodes = e.code;
-  
-        switch (code) {
-          case "ERROR_USER_REJECTED":
-            console.log("Image deletion denied by user");
-            break;
-          default:
-            console.log(message);
-            break;
-        }
-      });
-      console.log('Deleted assets:', result);
-      Alert.alert('Deleted', 'Selected media files have been deleted');
-      router.push({
-          pathname: "/",
-          params: {
-              month: month, // Pass as a string
-              mediaCount: 99 //mediaAssets.length - toDeleteAssets.length, // Pass as a number
-          }
-      });
-    } catch (error) {
-      console.error('Error deleting assets:', error);
-      Alert.alert('Error', 'Failed to delete assets');
-    }
-  
+type SwipedAction = {
+  action: 'delete' | 'keep';
+  asset: MediaLibrary.Asset;
 };
 
-  
-  
-  
-  const OverlayRight = () => (
-    <View style={[styles.overlayLabelContainer, { backgroundColor: 'green' }]}>
-      <Text style={styles.overlayLabelText}>Like</Text>
-    </View>
-  );
-  
-  const OverlayLeft = () => (
-    <View style={[styles.overlayLabelContainer, { backgroundColor: 'red' }]}>
-      <Text style={styles.overlayLabelText}>Nope</Text>
-    </View>
-  );
+export const TinderSwipe = ({
+  month,
+  mediaAssets,
+}: {
+  month: string;
+  mediaAssets: MediaLibrary.Asset[];
+}) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const cardRefs = React.useRef<(TinderCard | null)[]>([]);
+  const [pendingDeletions, setPendingDeletions] = React.useState<MediaLibrary.Asset[]>([]);
+  const [pendingKeeps, setPendingKeeps] = React.useState<MediaLibrary.Asset[]>([]);
+  const [swipedActions, setSwipedActions] = React.useState<SwipedAction[]>([]);
 
-  const OverlayTop = () => (
-    <View style={[styles.overlayLabelContainer, { backgroundColor: 'blue' }]}>
-      <Text style={styles.overlayLabelText}>Super Like</Text>
-    </View>
-  );
+  // When a card is swiped, record the action and update state
+  const onSwiped = (direction: string) => {
+    const currentAsset = mediaAssets[currentIndex];
+    if (direction === 'left') {
+      setPendingDeletions((prev) => [...prev, currentAsset]);
+      setSwipedActions((prev) => [...prev, { action: 'delete', asset: currentAsset }]);
+    } else if (direction === 'right') {
+      setPendingKeeps((prev) => [...prev, currentAsset]);
+      setSwipedActions((prev) => [...prev, { action: 'keep', asset: currentAsset }]);
+    } else if (direction === 'top') {
+      Alert.alert('Super Liked!');
+      setSwipedActions((prev) => [...prev, { action: 'keep', asset: currentAsset }]);
+    }
+    Alert.alert(`Swiped ${direction}`);
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  // Programmatically swipe the current card
+  const handleSwipeLeft = () => {
+    if (cardRefs.current[currentIndex]) {
+      cardRefs.current[currentIndex]?.swipeLeft();
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (cardRefs.current[currentIndex]) {
+      cardRefs.current[currentIndex]?.swipeRight();
+    }
+  };
+
+  // Undo the last swipe action and revert state changes
+  const handleUndo = () => {
+    if (swipedActions.length === 0 || currentIndex === 0) return;
+    const lastAction = swipedActions[swipedActions.length - 1];
+    setSwipedActions((prev) => prev.slice(0, prev.length - 1));
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+    if (lastAction.action === 'delete') {
+      setPendingDeletions((prev) =>
+        prev.filter((asset) => asset.id !== lastAction.asset.id)
+      );
+    } else if (lastAction.action === 'keep') {
+      setPendingKeeps((prev) =>
+        prev.filter((asset) => asset.id !== lastAction.asset.id)
+      );
+    }
+  };
+
+  // Finalize deletion of all assets marked for deletion
+  const handleProceed = async () => {
+    if (pendingDeletions.length > 0) {
+      try {
+        const assetIds = pendingDeletions.map((asset) => asset.id);
+        await DeleteMedia.deletePhotos(assetIds);
+        Alert.alert('Media deleted successfully!');
+        setPendingDeletions([]);
+      } catch (error: any) {
+        Alert.alert('Error deleting media', error.message);
+        console.log(error)
+      }
+    } else {
+      Alert.alert('No media marked for deletion.');
+    }
+  };
+
+  // When all cards have been swiped, show a final screen
+  if (currentIndex >= mediaAssets.length) {
+    return (
+      <SafeAreaView style={styles.finalScreen} edges={['top', 'bottom', 'left', 'right']}>
+        <Text style={styles.finalTitle}>
+          Photos to be Deleted ({pendingDeletions.length})
+        </Text>
+        <ScrollView contentContainerStyle={styles.grid}>
+          {pendingDeletions.map((asset) => (
+            <Image key={asset.id} source={{ uri: asset.uri }} style={styles.gridImage} />
+          ))}
+        </ScrollView>
+        <View style={styles.finalButtonsContainer}>
+          <TouchableOpacity style={styles.finalButton} onPress={handleUndo}>
+            <Text style={styles.finalButtonText}>Undo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.finalButton} onPress={handleProceed}>
+            <Text style={styles.finalButtonText}>
+              Delete ({pendingDeletions.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={styles.wrapper}>
-      <Text style={styles.header}>Media from {month}</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       {mediaAssets.map((item, index) => (
-        <View style={styles.cardContainer} pointerEvents="box-none" key={index}>
-          <TinderCard
-            cardWidth={380}
-            cardHeight={730}
-            OverlayLabelRight={OverlayRight}
-            OverlayLabelLeft={OverlayLeft}
-            OverlayLabelTop={OverlayTop}
-            cardStyle={styles.card}
-            onSwipedRight={async () => {
-              await deleteAssets(mediaAssets)
-            }}
-            onSwipedTop={() => Alert.alert('Swiped Top')}
-            onSwipedLeft={() => Alert.alert('Swiped left')}
-          >
-            <Image source={{ uri: item.uri }} style={styles.image} />
-          </TinderCard>
+        <View style={styles.cardContainer} key={index}>
+          {index === currentIndex && (
+            <TinderCard
+              ref={(el) => (cardRefs.current[index] = el)}
+              cardWidth={width}
+              cardHeight={height}
+              cardStyle={styles.card}
+              onSwipedRight={() => onSwiped('right')}
+              onSwipedTop={() => onSwiped('top')}
+              onSwipedLeft={() => onSwiped('left')}
+            >
+              <Image source={{ uri: item.uri }} style={styles.image} />
+            </TinderCard>
+          )}
         </View>
       ))}
-    </View>
+
+      {/* Action buttons for swipe gestures */}
+      <View style={styles.buttonsContainer}>
+        <ActionButton text="Delete" color="red" icon="delete" onPress={handleSwipeLeft} />
+        <ActionButton text="Keep" color="green" icon="star" onPress={handleSwipeRight} />
+      </View>
+
+      {/* Additional bottom buttons for Undo and Proceed */}
+      <View style={styles.bottomButtonsContainer}>
+        <TouchableOpacity style={styles.bottomButton} onPress={handleUndo}>
+          <Text style={styles.bottomButtonText}>Undo</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.bottomButton} onPress={handleProceed}>
+          <Text style={styles.bottomButtonText}>
+            Delete ({pendingDeletions.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  wrapper: {
+  container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginVertical: 20,
+    backgroundColor: 'black',
   },
   cardContainer: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   card: {
-    borderRadius: 48,
+    width: '100%',
+    height: '100%',
+    borderRadius: 0,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 48,
+    resizeMode: 'cover',
   },
-  overlayLabelContainer: {
+  buttonsContainer: {
+    position: 'absolute',
+    bottom: 140,
     width: '100%',
-    height: '100%',
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    zIndex: 10,
   },
-  overlayLabelText: {
-    color: 'white',
-    fontSize: 32,
+  bottomButtonsContainer: {
+    position: 'absolute',
+    bottom: 40,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    zIndex: 10,
+  },
+  bottomButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bottomButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  finalScreen: {
+    flex: 1,
+    backgroundColor: 'black',
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  finalTitle: {
+    fontSize: 22,
+    color: '#fff',
+    marginBottom: 10,
     fontWeight: 'bold',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    padding: 10,
+  },
+  gridImage: {
+    width: width / 3 - 12,
+    height: width / 3 - 12,
+    margin: 4,
+    borderRadius: 8,
+  },
+  finalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '90%',
+    marginTop: 20,
+  },
+  finalButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  finalButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

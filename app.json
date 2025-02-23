@@ -1,8 +1,8 @@
 {
 	"expo": {
-		"name": "SwipeTrash",
+		"name": "sWipe",
 		"owner": "gomodtidy2",
-		"displayName": "SwipeTrash",
+		"displayName": "sWipe",
 		"slug": "swipe",
 		"version": "1.0.0",
 		"orientation": "portrait",
@@ -20,11 +20,10 @@
 				"backgroundColor": "#ffffff"
 			},
 			"permissions": [
-				"READ_MEDIA_IMAGES",
-				"READ_MEDIA_VIDEO",
 				"android.permission.READ_EXTERNAL_STORAGE",
 				"android.permission.WRITE_EXTERNAL_STORAGE",
-				"android.permission.ACCESS_MEDIA_LOCATION"
+				"android.permission.ACCESS_MEDIA_LOCATION",
+				"android.permission.MANAGE_EXTERNAL_STORAGE"
 			],
 			"package": "com.gomodtidy.swipe"
 		},
@@ -44,6 +43,15 @@
 				}
 			],
 			"expo-router",
+			[	
+					"react-native-permissions",	
+					{
+					"iosPermissions": [
+					  "Camera",
+					  "Microphone"
+					]
+				  }
+			],
 			[
 				"expo-splash-screen",
 				{
