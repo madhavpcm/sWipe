@@ -9,7 +9,7 @@ sWipe is an open-source media management app designed to help users declutter th
 - **Swipe Right → Keep**: Retains media in the gallery.
 
 - [x] **Free & Open Source**
-- No locked features, no subscriptions—sWipe is fully **FOSS (Free and Open Source Software)**.
+- No locked features, no subscriptions
 - Privacy Focussed
 
 
