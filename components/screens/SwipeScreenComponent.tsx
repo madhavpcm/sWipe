@@ -22,6 +22,7 @@ import { PanGestureHandler } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
 import { useRouter } from 'expo-router';
+import { TinderCard } from 'rn-tinder-card';
 type MediaStats = {
     month: string;
     mediaCount: number;
@@ -193,7 +194,7 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         if (currentIndex < mediaAssets.length - 1) {
             setCurrentIndex((prev) => prev + 1);
         }
-        translateX.value = 0;
+        // translateX.value = 0;
     };
 
     const skipCurrent = () => {
@@ -317,6 +318,54 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         const previousAsset = mediaAssets[currentIndex - 1] || null;
         const nextAsset = mediaAssets[currentIndex + 1] || null;
 
+
+  
+  
+  const OverlayRight = () => (
+    <View style={[styles.overlayLabelContainer, { backgroundColor: 'green' }]}>
+      <Text style={styles.overlayLabelText}>Like</Text>
+    </View>
+  );
+  
+  const OverlayLeft = () => (
+    <View style={[styles.overlayLabelContainer, { backgroundColor: 'red' }]}>
+      <Text style={styles.overlayLabelText}>Nope</Text>
+    </View>
+  );
+
+  const OverlayTop = () => (
+    <View style={[styles.overlayLabelContainer, { backgroundColor: 'blue' }]}>
+      <Text style={styles.overlayLabelText}>Super Like</Text>
+    </View>
+  );
+
+        return (
+            <View style={styles.mediaContainer}>
+              {/* <Text style={styles.header}>Media from {month}</Text> */}
+              {mediaAssets.map((item, index) => (
+                <View style={styles.cardContainer} pointerEvents="box-none" key={index}>
+                  <TinderCard
+                    cardWidth={380}
+                    cardHeight={730}
+                    OverlayLabelRight={OverlayRight}
+                    OverlayLabelLeft={OverlayLeft}
+                    OverlayLabelTop={OverlayTop}
+                    cardStyle={styles.card}
+                    onSwipedRight={async () => {
+
+                      handleAction("keep")
+                    }}
+                    // onSwipedTop={() => Alert.alert('Swiped Top')}
+                    onSwipedLeft={() => handleAction('delete')}
+                  >
+                    <Image source={{ uri: item.uri }} style={styles.image}   resizeMode="cover"/>
+                  </TinderCard>
+                </View>
+              ))}
+            </View>
+          );
+
+        /*
         // Clean up any previously loaded images
         return (
             <View style={styles.mediaContainer}>
@@ -350,8 +399,8 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                 )}
             </View>
         );
-    };
-
+        */
+       };
     if (!permission) {
         return (
             <View style={styles.container}>
@@ -373,7 +422,7 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
     }
 
     return (
-        <GestureHandlerRootView style={styles.container}>
+        // <GestureHandlerRootView style={styles.container}>
             <View style={styles.container}>
                 <View style={styles.header}>
                     {actionHistory.length > 0 && (
@@ -397,11 +446,11 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                     )}
                 </View>
 
-                <PanGestureHandler onGestureEvent={gestureHandler}>
-                    <Animated.View style={[styles.imageContainer, rStyle]}>
+                {/* <PanGestureHandler onGestureEvent={gestureHandler}> */}
+                    <View style={[styles.imageContainer, rStyle]}>
                         {renderMediaItem()}
-                    </Animated.View>
-                </PanGestureHandler>
+                    </View>
+                {/* </PanGestureHandler> */}
 
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
@@ -411,12 +460,20 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                         <Text style={styles.buttonText}>Delete</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.button, styles.skipButton]}
                         onPress={skipCurrent}
                     >
                         <Text style={styles.buttonText}>Skip</Text>
+                    </TouchableOpacity> */}
+                    <TouchableOpacity
+                        style={[styles.button, styles.skipButton]}
+                        onPress={skipCurrent}
+                    >
+                        <Text style={styles.buttonText}>Share</Text>
                     </TouchableOpacity>
+
+
 
                     <TouchableOpacity
                         style={[styles.button, styles.keepButton]}
@@ -443,13 +500,15 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                     {currentIndex + 1} / {mediaAssets.length}
                 </Text>
             </View>
-        </GestureHandlerRootView>
+    // </GestureHandlerRootView> 
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
         backgroundColor: '#f8f8f8',
     },
     header: {
@@ -490,10 +549,10 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     image: {
-        width: SCREEN_WIDTH,
-        height: SCREEN_HEIGHT,
-        resizeMode: 'cover',
-    },
+        width: '100%',
+        height: '100%',
+        borderRadius: 10,
+      },
     video: {
         width: '100%',
         height: '100%',
@@ -583,4 +642,30 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         padding: 20,
     },
+    wrapper: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'white',
+      },
+      cardContainer: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      card: {
+        borderRadius: 48,
+      },
+      overlayLabelContainer: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      overlayLabelText: {
+        color: 'white',
+        fontSize: 32,
+        fontWeight: 'bold',
+      },
 });

@@ -24,19 +24,18 @@ interface MonthListProps {
   mediaAssets: Asset[];
   monthToMediaCount: Record<string, number>
   setMonthToMediaCount:(prop:Record<string, number>) => void
-  isLoading: boolean
 }
 
-const MonthList = ({ groupedMedia, mediaAssets, monthToMediaCount ,setMonthToMediaCount, isLoading }: MonthListProps) => {
+const MonthList = ({ groupedMedia, mediaAssets, monthToMediaCount ,setMonthToMediaCount }: MonthListProps) => {
   
 useEffect(() => {
 const localMonthToMediaCount: Record<string, number> = {}
-  if(!isLoading){groupedMedia.forEach((item)=> {
+  groupedMedia.forEach((item)=> {
     localMonthToMediaCount[item.title] = item.data.length
 
   })
-  setMonthToMediaCount(localMonthToMediaCount)}
-}, [isLoading])
+  setMonthToMediaCount(localMonthToMediaCount)
+}, [])
 
   return (
     <View className="flex-1 bg-white">
