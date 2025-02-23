@@ -1,51 +1,55 @@
-# Sorting Hat
-# Welcome to your Expo app 👋
+# sWipe – Smart & Fun Media Cleanup
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+sWipe is an open-source media management app designed to help users declutter their photo and video library effortlessly. Instead of aimlessly scrolling through social media, sWipe lets you **scroll with purpose**—cleaning up your gallery with intuitive swipe gestures.
 
-## Get started
+## Features
 
-1. Install dependencies
+- [x] **Swipe-Based Sorting**
+- **Swipe Left → Trash**: Moves media to a staging area for review before deletion.
+- **Swipe Right → Keep**: Retains media in the gallery.
 
-   ```bash
-   npm install
-   ```
+- [x] **Free & Open Source**
+- No locked features, no subscriptions—sWipe is fully **FOSS (Free and Open Source Software)**.
+- Privacy Focussed
 
-2. Start the app
 
-   ```bash
-    npx expo start
-   ```
+## Future Improvements
 
-In the output, you'll find options to open the app in a
+- [ ] **Daily Cleanup Goals**
+- - Helps users declutter in small, manageable steps instead of overwhelming them.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- [ ] **Smart Insights & Stats**
+- - Tracks photo-taking habits and **generates a heatmap** of media activity.
+- - Provides insights into how frequently users capture photos and videos.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- [ ] Publish on fdroid
 
-## Get a fresh project
+- [ ] Add WebDAV support
+- - We are eager to add WebDAV support so you can cleanup media in remote web directories like NextCloud
 
-When you're ready, run:
+- [ ] iOS Support
 
-```bash
-npm run reset-project
+---
+
+## Screenshots
+
+---
+
+
+### 🛠 Build from Source
+
+#### Prerequisites
+
+- Android Studio (latest stable version), we used an emulator from this
+- JDK 17+
+- Android SDK & build tools
+
+sWipe is written in React Native and Expo and built for Android 
+
+```
+git clone https://github.com/madhavpcm/sWipe.git 
+npm install
+npx eas build --platform android --profile development # Should generate ApK
+npx expo start # Starts Development server with expo
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
