@@ -21,12 +21,16 @@ import Animated, {
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
-
+import { useRouter } from 'expo-router';
+type MediaStats = {
+    month: string;
+    mediaCount: number;
+  };
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
 
-export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.Asset[]}) {
+export function SwipeScreenComponent({mediaAssets, month}:{mediaAssets: MediaLibrary.Asset[],  month:string}) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [permission, setPermission] = useState<string | null>('granted');
     const [isPlaying, setIsPlaying] = useState(false);
@@ -37,6 +41,8 @@ export function SwipeScreenComponent({mediaAssets}:{mediaAssets: MediaLibrary.As
     const translateX = useSharedValue(0);
     // log mediaassets
     console.log('Media assets:', mediaAssets);
+    const router = useRouter();
+
 
 const cleanupImageReferences = async (uri: string) => {
     if(!uri) return false;
@@ -105,6 +111,13 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         });
         console.log('Deleted assets:', result);
         Alert.alert('Deleted', 'Selected media files have been deleted');
+        router.push({
+            pathname: "/",
+            params: {
+                month: month, // Pass as a string
+                mediaCount: mediaAssets.length - toDeleteAssets.length, // Pass as a number
+            }
+        });
       } catch (error) {
         console.error('Error deleting assets:', error);
         Alert.alert('Error', 'Failed to delete assets');

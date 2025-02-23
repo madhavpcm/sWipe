@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-media-library";
 import ListItem from "react-native-flatboard/lib/components/common/ListItem";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
 
 interface MediaGroup {
   title: string;
@@ -21,9 +22,22 @@ interface MediaGroup {
 interface MonthListProps {
   groupedMedia: MediaGroup[];
   mediaAssets: Asset[];
+  monthToMediaCount: Record<string, number>
+  setMonthToMediaCount:(prop:Record<string, number>) => void
+  isLoading: boolean
 }
 
-const MonthList = ({ groupedMedia, mediaAssets }: MonthListProps) => {
+const MonthList = ({ groupedMedia, mediaAssets, monthToMediaCount ,setMonthToMediaCount, isLoading }: MonthListProps) => {
+  
+useEffect(() => {
+const localMonthToMediaCount: Record<string, number> = {}
+  if(!isLoading){groupedMedia.forEach((item)=> {
+    localMonthToMediaCount[item.title] = item.data.length
+
+  })
+  setMonthToMediaCount(localMonthToMediaCount)}
+}, [isLoading])
+
   return (
     <View className="flex-1 bg-white">
       <View className="flex-row justify-between items-center px-4 py-2">
@@ -36,13 +50,14 @@ const MonthList = ({ groupedMedia, mediaAssets }: MonthListProps) => {
       <FlatList
         data={groupedMedia}
         keyExtractor={(item) => item.title}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          return (
           <MonthListItem
             title={item.title}
-            data={item.data}
+            mediaCount={monthToMediaCount[item.title]}
             mediaAssets={mediaAssets}
           />
-        )}
+        )}}
         contentContainerStyle={{ padding: 16 }}
         showsVerticalScrollIndicator={false}
         scrollEnabled={true}
@@ -53,7 +68,7 @@ const MonthList = ({ groupedMedia, mediaAssets }: MonthListProps) => {
 
 export default MonthList;
 
-const MonthListItem = ({ title, data, mediaAssets }: { title: string, data: Asset[], mediaAssets: Asset[] }) => {
+const MonthListItem = ({ title, mediaCount, mediaAssets }: { title: string, mediaCount: number, mediaAssets: Asset[] }) => {
   const router = useRouter();
 
   const handlePress = () => {
@@ -96,7 +111,7 @@ className="font-semibold"
 <Text
 className="text-sm font-light text-muted-foreground"
 >
-  {data.length} items
+  {mediaCount?mediaCount:0} items
 </Text>
         </View>
 

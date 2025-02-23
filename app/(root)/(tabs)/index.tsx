@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 
 import { Text, View,
   ScrollView,
@@ -6,7 +6,8 @@ import { Text, View,
   TouchableOpacity,
   SafeAreaView,
   StyleSheet,
-  ToastAndroid
+  ToastAndroid,
+  Button
 } from "react-native";
 import images from "@/constants/images";
 import icons from "@/constants/icons";
@@ -33,15 +34,17 @@ interface MediaGroup {
 }
 
 export default function Index() {
+  const { month, mediaCount } = useLocalSearchParams<{month: string; mediaCount:string;}>();
   const [storageInfo, setStorageInfo] = useState<StorageInfo>({
     totalSpace: '0',
     freeSpace: '0',
     usedSpace: '0'
   });
   const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
-
+  const [monthToMediaCount, setMonthToMediaCount] = useState<Record<string, number>>({})
   const getStorageInfo = async () => {
     try {
       const totalSpace = await FileSsystem.getTotalDiskCapacityAsync();
@@ -70,7 +73,6 @@ export default function Index() {
 
   const getMediaAssets = async () => {
     try {
-      setIsLoading(true);
       const media = await MediaLibrary.getAssetsAsync({
         mediaType: ['photo', 'video'],
         sortBy: ['creationTime'],
@@ -138,7 +140,16 @@ export default function Index() {
       }
     }
     checkPermissions()
+    // console.log("Ninte thantha..")
   }, [])
+
+  useEffect(() => {
+    if (mediaCount) {
+      const localMonthToMediaCount = monthToMediaCount
+      localMonthToMediaCount[month] = Number(mediaCount)
+      setMonthToMediaCount(localMonthToMediaCount)
+    }
+  }, [mediaCount]);
 
   const onComplete = async () => {
     const {status, accessPrivileges} = await MediaLibrary.requestPermissionsAsync();
@@ -169,6 +180,12 @@ export default function Index() {
       />}
       {isGtant && 
         <View className="flex-1 bg-white">
+          {/* <TouchableOpacity onPress={()=> {router.push(
+        '/'
+      )}}> 
+              <View className="h-20 w-48 bg-black"><Text>Andi</Text></View>
+              
+      </TouchableOpacity> */}
           <HomeCarousel 
             storageInfo={storageInfo} 
             mediaCount={{
@@ -179,6 +196,9 @@ export default function Index() {
           <MonthList 
             groupedMedia={groupedMedia}
             mediaAssets={mediaAssets}
+            setMonthToMediaCount={setMonthToMediaCount}
+            monthToMediaCount={monthToMediaCount}
+            isLoading={isLoading}
           />
         </View>
       }
