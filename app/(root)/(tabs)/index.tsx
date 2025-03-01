@@ -7,7 +7,8 @@ import { Text, View,
   SafeAreaView,
   StyleSheet,
   ToastAndroid,
-  Button
+  Button,
+  Linking
 } from "react-native";
 import images from "@/constants/images";
 import icons from "@/constants/icons";
@@ -22,43 +23,118 @@ import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
 import Header from "@/components/Header";
 
-import  PermissionsAndroid  from 'react-native-permissions';
+import  {PermissionsAndroid, Platform}  from 'react-native';
+import React from "react";
   
-  const requestWriteStoragePermission = async () => {
+  const requestWriteStoragePermission1 = async () => {
     try {
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      ];
+      const platformVersion = Number(Platform.Version);
+      if (platformVersion < 29) {
+        // WRITE_EXTERNAL_STORAGE is only needed for Android 9 (API 28) and below
+        permissions.push(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+      } else if (platformVersion >= 30) {
+        // MANAGE_EXTERNAL_STORAGE is only required for Android 11+
+        permissions.push(PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE);
+      }
       console.log("requesting perms for native")
-      const rgranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to save files.',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
-      const wgranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to save files.',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
+    //   const granted = await PermissionsAndroid.requestMultiple
+    //   ([PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE, 
+    //     PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    //     PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
+    //     PermissionsAndroid.PERMISSIONS.MANAGE_MEDIA
+    //   ]
+    // );
+    const granted = await PermissionsAndroid.requestMultiple(permissions);
+    console.log("Perms granted hereee", granted)
+
+      // const rgranted = await PermissionsAndroid.request(
+      //   PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      //   {
+      //     title: 'Storage Permission',
+      //     message: 'This app needs access to your storage to save files.',
+      //     buttonNegative: 'Cancel',
+      //     buttonPositive: 'OK',
+      //   }
+      // );
+      // const wgranted = await PermissionsAndroid.request(
+      //   PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      //   {
+      //     title: 'Storage Permission',
+      //     message: 'This app needs access to your storage to save files.',
+      //     buttonNegative: 'Cancel',
+      //     buttonPositive: 'OK',
+      //   }
+      // );
+      // const mgranted = await PermissionsAndroid.request(
+      //   PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
+      //   {
+      //     title: 'Storage Permission',
+      //     message: 'This app needs access to your storage to delete files.',
+      //     buttonNegative: 'Cancel',
+      //     buttonPositive: 'OK',
+      //   }
+      // );
+      // const megranted = await PermissionsAndroid.request(
+      //   PermissionsAndroid.PERMISSIONS.MANAGE_MEDIA,
+      //   {
+      //     title: 'Storage Permission',
+      //     message: 'This app needs access to your storage to delete files.',
+      //     buttonNegative: 'Cancel',
+      //     buttonPositive: 'OK',
+      //   }
+      // );
+  //     const showRationale = shouldShowRequestPermissionRationale(megranted);
+  // console.log('Should show rationale:', showRationale);
   
-      if (rgranted === PermissionsAndroid.RESULTS.GRANTED && wgranted === PermissionsAndroid.RESULTS.GRANTED) {
+      // if (rgranted === PermissionsAndroid.RESULTS.GRANTED && 
+      //   wgranted === PermissionsAndroid.RESULTS.GRANTED &&
+      //    mgranted === PermissionsAndroid.RESULTS.GRANTED
+      //    && megranted === PermissionsAndroid.RESULTS.GRANTED) {
+      if(granted["android.permission.READ_EXTERNAL_STORAGE"] === "granted" &&
+      granted["android.permission.WRITE_EXTERNAL_STORAGE"] === "granted") {
+      
         console.log('R/Write External Storage Permission Granted');
         return true;
       } else {
-        console.log('R/Write External Storage Permission Denied', rgranted, wgranted);
+        // console.log('R/Write External Storage Permission Denied', rgranted, wgranted);
         return false;
       }
     } catch (err) {
-      console.warn(err);
+      console.warn(err , "Error in perms testtingg");
       return false;
     }
   };
-  
+  const requestStoragePermission = async () => {
+    let permissions = [PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+      PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO, 
+      // PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO
+    ];
+
+    const platformVersion = Number(Platform.Version);
+
+    if (Platform.OS === 'android') {
+      try {
+        if (platformVersion < 33) {
+          // Android 12 and below
+          permissions = permissions.concat([
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          ]);
+        } 
+        const granted = await PermissionsAndroid.requestMultiple(permissions);
+        // if (manageStorage !== PermissionsAndroid.RESULTS.GRANTED) {
+          // console.log("MANAGE_EXTERNAL_STORAGE permission denied");
+          // Linking.openSettings(); // Open settings manually
+        // }
+        console.log("Permissions result:", granted);
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+  };
 interface StorageInfo {
   totalSpace: string;
   freeSpace: string;
@@ -162,17 +238,17 @@ export default function Index() {
     }
   ]
 
-  const  [isGtant, setIsGtant] = useState(false)
+  const  [isGranted, setisGranted] = useState(false)
 
   useEffect(() => {
   
 
     const checkPermissions = async () => {
-      await requestWriteStoragePermission()
+      await requestStoragePermission()
       const {status} = await MediaLibrary.getPermissionsAsync();
       if(status === "granted") {
         console.log("Permission granted for expo");
-        setIsGtant(true);
+        setisGranted(true);
         getStorageInfo();
         getMediaAssets();
       } else {
@@ -192,11 +268,12 @@ export default function Index() {
   }, [mediaCount]);
 
   const onComplete = async () => {
+    console.log("Requesting permissions for media library");
     const {status, accessPrivileges} = await MediaLibrary.requestPermissionsAsync();
 
+    console.log("Permission granted:", accessPrivileges, "status:", status);
     if(status === "granted") {
-      console.log("Permission granted:", accessPrivileges);
-      setIsGtant(true);
+      setisGranted(true);
       await getStorageInfo();
       await getMediaAssets();
     } else {
@@ -207,7 +284,7 @@ export default function Index() {
   return (
     <View style={{flex: 1}}>
       <Header />
-       {!isGtant && <FlatBoard
+       {!isGranted && <FlatBoard
         data={onboardData}
         onFinish={onComplete}
         accentColor="#000"
@@ -218,7 +295,7 @@ export default function Index() {
         descriptionStyle={styles.descriptionStyles}
         headingStyle={styles.headingStyles}
       />}
-      {isGtant && 
+      {isGranted && 
         <View className="flex-1 bg-white">
           {/* <TouchableOpacity onPress={()=> {router.push(
         '/'
@@ -260,3 +337,7 @@ const styles = StyleSheet.create({
   
   }
 })
+
+function shouldShowRequestPermissionRationale(permission: any) {
+  throw new Error("Function not implemented.");
+}

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import { format } from 'date-fns';
 import { SwipeScreenComponent } from '@/components/screens/SwipeScreenComponent';
-import { TinderSwipe } from '@/components/TinderSwipe';
 import React from 'react';
 
 async function getMediaByMonth(monthString: string) {
@@ -70,9 +69,7 @@ export default function SwipeScreen() {
   }, [month]);
 
   return (
-  //   <>
-  //   <TinderSwipe month={month} mediaAssets = {mediaAssets } />
-  // </>
+
     <View className="flex-1 bg-white p-4">
       
       <SwipeScreenComponent mediaAssets={mediaAssets} month={month}/>

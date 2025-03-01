@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'SwipeTrash'
+rootProject.name = 'sWipe'
 
 dependencyResolutionManagement {
   versionCatalogs {
@@ -35,6 +35,4 @@ apply from: new File(["node", "--print", "require.resolve('expo/package.json')"]
 useExpoModules()
 
 include ':app'
-include 'react-native-delete-media'
-project(':react-native-delete-media').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-delete-media/android')
 includeBuild(new File(["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile())

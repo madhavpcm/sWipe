@@ -18,11 +18,17 @@ import Animated, {
     runOnJS,
     useAnimatedGestureHandler,
 } from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
-import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
+// import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
 import { useRouter } from 'expo-router';
 import { TinderCard } from 'rn-tinder-card';
+import { NativeModules } from 'react-native';
+
+const { DeleteMedia } = NativeModules;
+console.log("NativeModules:", NativeModules); // Check if DeleteMedia appears here
+console.log("DeleteMedia:", NativeModules.DeleteMedia); // Check if DeleteMedia appears here
+
+
 type MediaStats = {
     month: string;
     mediaCount: number;
@@ -94,19 +100,20 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         // console.log('DeleteMedia:', DeleteMedia);
         console.log(util.inspect(DeleteMedia, false, null, true /* enable colors */))
         const result =  DeleteMedia.deletePhotos(nonNullAssetsUri)
+        // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id))
         .then(() => {
           console.log("Image deleted");
         })
-        .catch((e) => {
+        .catch((e: { message: any; code: any; }) => {
           const message = e.message;
-          const code: ErrorCodes = e.code;
+          const code = e.code;
     
           switch (code) {
             case "ERROR_USER_REJECTED":
               console.log("Image deletion denied by user");
               break;
             default:
-              console.log(message);
+              console.log("Error Deleting Media:", message);
               break;
           }
         });
