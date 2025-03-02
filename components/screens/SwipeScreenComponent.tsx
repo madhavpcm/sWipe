@@ -10,18 +10,13 @@ import {
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { Video } from 'expo-av';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, {
+import {
     useAnimatedStyle,
     useSharedValue,
-    withSpring,
-    runOnJS,
-    useAnimatedGestureHandler,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-// import { DeleteMedia, ErrorCodes } from "react-native-delete-media";
 import { useRouter } from 'expo-router';
-import { TinderCard } from 'rn-tinder-card';
+import CardItem from './CardItem'
 import { NativeModules } from 'react-native';
 
 const { DeleteMedia } = NativeModules;
@@ -41,8 +36,10 @@ export function SwipeScreenComponent({mediaAssets, month}:{mediaAssets: MediaLib
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [permission, setPermission] = useState<string | null>('granted');
     const [isPlaying, setIsPlaying] = useState(false);
-    const [toDeleteAssets, setToDeleteAssets] = useState<Array<MediaLibrary.Asset>>([]);
-    const [actionHistory, setActionHistory] = useState<Array<{index: number, action: string, asset: MediaLibrary.Asset}>>([])
+    const [toDeleteUri, setToDeleteUri] = useState<Array<string>>([]);
+    const [toKeepUri, setToKeepUri] = useState<Array<string>>([]);
+    const [currentAsset, setCurrentAsset] = useState<{index: number, assetUri: string}>({index: 0, assetUri: ''});
+    const [actionHistory, setActionHistory] = useState<Array<{index: number, action: string, assetUri: string}>>([])
     const videoRef = useRef<Video | null>(null);
 
     const translateX = useSharedValue(0);
@@ -50,57 +47,22 @@ export function SwipeScreenComponent({mediaAssets, month}:{mediaAssets: MediaLib
     console.log('Media assets:', mediaAssets);
     const router = useRouter();
 
+    useEffect(() => {
+        setCurrentAsset({index: currentIndex,assetUri: mediaAssets[currentIndex]?.uri});
+    }, [mediaAssets]);
 
-const cleanupImageReferences = async (uri: string) => {
-    if(!uri) return false;
-    try {
-      // Clear from Image component cache
-      Image.resolveAssetSource({ uri });
-      return true;
-    } catch (error) {
-      console.error('Error cleaning up image reference:', error);
-      return false;
-    }
-  };
 
-const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
+
+const deleteAssets = async (deleteUris: string[]) => {
     // handle null assets
-    if (!assets || assets.length === 0){
+    if (!deleteUris || deleteUris.length === 0){
     Alert.alert('No media', 'No assets available to delete');
     return;
   }
 
     try {
 
-    //     await Promise.all(assets.map(asset => cleanupImageReferences(asset?.uri)));
-
-    //   // Wait a bit to ensure cleanup is complete
-    //     await new Promise(resolve => setTimeout(resolve, 300));
-
-    //   // Clear any cached images from the current view
-    //   setCurrentIndex(prevIndex => {
-    //     if (prevIndex >= mediaAssets.length - 1) {
-    //       return mediaAssets.length - 2;
-    //     }
-    //     return prevIndex;
-    //   });
-
-    //   // Remove from animated view if present
-    //   translateX.value = 0;
-
-    //   // Clear from display before deletion
-    //   renderMediaItem();
-
-    //   // Force a render cycle
-    //   await new Promise(resolve => setTimeout(resolve, 100));
-
-        // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id));
-        const util = require('util')
-        const nonNullAssetsUri = assets.filter(asset => asset !== null).map(asset => asset.uri).filter(uri => uri !== null);
-        // console.log('DeleteMedia:', DeleteMedia);
-        console.log(util.inspect(DeleteMedia, false, null, true /* enable colors */))
-        const result =  DeleteMedia.deletePhotos(nonNullAssetsUri)
-        // const result = await MediaLibrary.deleteAssetsAsync(assets.map(asset => asset.id))
+        const result =  DeleteMedia.deletePhotos(deleteUris)
         .then(() => {
           console.log("Image deleted");
         })
@@ -123,7 +85,7 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
             pathname: "/",
             params: {
                 month: month, // Pass as a string
-                mediaCount: mediaAssets.length - toDeleteAssets.length, // Pass as a number
+                mediaCount: mediaAssets.length - toDeleteUri.length, // Pass as a number
             }
         });
       } catch (error) {
@@ -133,54 +95,7 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
     
   };
 
-
-    // useEffect(() => {
-    //     (async () => {
-    //         try {
-    //             const { status } = await MediaLibrary.requestPermissionsAsync();
-    //             console.log('Permission status:', status);
-    //             setPermission(status === 'granted');
-
-    //             if (status === 'granted') {
-    //                 const media = await MediaLibrary.getAssetsAsync({
-    //                     first: 50,
-    //                     sortBy: [MediaLibrary.SortBy.creationTime],
-    //                     mediaType: [
-    //                         MediaLibrary.MediaType.photo,
-    //                         MediaLibrary.MediaType.video,
-    //                     ],
-    //                 });
-
-    //                 console.log('Found media assets:', media.assets.length);
-    //                 console.log('Total count:', media.totalCount);
-
-    //                 if (media.assets.length > 0) {
-    //                     console.log(
-    //                         'First asset type:',
-    //                         media.assets[0].mediaType
-    //                     );
-    //                 }
-
-    //                 setMediaAssets(media.assets);
-    //             }
-    //         } catch (error) {
-    //             console.error('Error accessing media library:', error);
-    //         }
-    //     })();
-    // }, []);
-
-    const handleSwipeComplete = async (direction: string) => {
-        if (videoRef.current) {
-            await videoRef.current.stopAsync();
-            setIsPlaying(false);
-        }
-
-        const action = direction === 'right' ? 'keep' : 'delete';
-        handleAction(action);
-    };
-
-    const handleAction = (action: string) => {
-        const currentAsset = mediaAssets[currentIndex];
+    const handleAction = (action: string, uri:string, index: number) => {
 
         // Record the action in history
         setActionHistory((prev) => [
@@ -188,24 +103,29 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
             {
                 index: currentIndex,
                 action,
-                asset: currentAsset,
+                assetUri: uri,
             },
         ]);
 
         // Handle specific actions
         if (action === 'delete') {
-            setToDeleteAssets((prev) => [...prev, currentAsset]);
+            setToDeleteUri((prev) => [...prev, uri]);
         }
-
-        // Move to next item if not at the end
+        if (action === 'keep') {
+            setToKeepUri((prev) => [...prev, uri]);
+        }
+        // Move to the next asset
+        // set next asset as current asset
         if (currentIndex < mediaAssets.length - 1) {
+            setCurrentAsset({index: currentIndex + 1,  assetUri: mediaAssets[currentIndex + 1]?.uri});
             setCurrentIndex((prev) => prev + 1);
         }
-        // translateX.value = 0;
+        
+
     };
 
     const skipCurrent = () => {
-        handleAction('skip');
+        handleAction('skip', currentAsset.assetUri, currentAsset.index);
     };
 
     const undoLastAction = () => {
@@ -217,23 +137,25 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
 
             // If it was a delete action, remove from delete list
             if (lastAction.action === 'delete') {
-                setToDeleteAssets((prev) =>
-                    prev.filter((asset) => asset.id !== lastAction.asset.id)
+                setToDeleteUri((prev) =>
+                    // all except the last one, spread
+                    prev.filter((uri) => uri !== lastAction.assetUri)
                 );
             }
 
             // Go back to the previous index
             setCurrentIndex(lastAction.index);
+            setCurrentAsset({index: lastAction.index, assetUri: lastAction.assetUri});
+
         }
     };
 
     const proceedToDelete = async () => {
-        console.log('Assets marked for deletion:', toDeleteAssets.length);
+        console.log('Assets marked for deletion:', toDeleteUri.length);
         
-        // await shareImages(toDeleteAssets.map(asset => asset.uri));
-        await deleteAssets(toDeleteAssets);
-        toDeleteAssets.forEach((asset) => {
-            console.log('Will delete:', asset.uri);
+        await deleteAssets(toDeleteUri);
+        toDeleteUri.forEach((uri) => {
+            console.log('Will delete:', uri);
         });
     };
 
@@ -248,165 +170,50 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
         setIsPlaying(!isPlaying);
     };
 
-    const gestureHandler = useAnimatedGestureHandler({
-        onStart: () => {
-            translateX.value = 0;
-        },
-        onActive: (event) => {
-            translateX.value = event.translationX;
-        },
-        onEnd: (event) => {
-            if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
-                translateX.value = withSpring(
-                    event.translationX > 0 ? SCREEN_WIDTH : -SCREEN_WIDTH,
-                    {},
-                    () => {
-                        runOnJS(handleSwipeComplete)(
-                            event.translationX > 0 ? 'right' : 'left'
-                        );
-                    }
-                );
-            } else {
-                translateX.value = withSpring(0);
-            }
-        },
-    });
-
     const rStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: translateX.value }],
     }));
-
-    // const renderMediaItem = () => {
-    //     if (!mediaAssets[currentIndex]) return null;
-
-    //     const asset = mediaAssets[currentIndex];
-    //     const isVideo = asset.mediaType === 'video';
-
-    //     if (isVideo) {
-    //         return (
-    //             <View style={styles.mediaContainer}>
-    //                 <Video
-    //                     ref={videoRef}
-    //                     source={{ uri: asset.uri }}
-    //                     style={styles.video}
-    //                     resizeMode="contain"
-    //                     isLooping
-    //                     onPlaybackStatusUpdate={(status) =>
-    //                         setIsPlaying(status.isPlaying)
-    //                     }
-    //                 />
-    //                 <TouchableOpacity
-    //                     style={styles.playButton}
-    //                     onPress={togglePlayPause}
-    //                 >
-    //                     <MaterialIcons
-    //                         name={isPlaying ? 'pause' : 'play-arrow'}
-    //                         size={40}
-    //                         color="white"
-    //                     />
-    //                 </TouchableOpacity>
-    //             </View>
-    //         );
-    //     }
-
-    //     return (
-    //         <Image
-    //             source={{ uri: asset.uri }}
-    //             style={styles.image}
-    //             resizeMode="cover"
-    //         />
-    //     );
-    // };
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: translateX.value }],
-    }));
     const renderMediaItem = () => {
-        const currentAsset = mediaAssets[currentIndex];
-        const previousAsset = mediaAssets[currentIndex - 1] || null;
-        const nextAsset = mediaAssets[currentIndex + 1] || null;
-
 
   
   
   const OverlayRight = () => (
     <View style={[styles.overlayLabelContainer, { backgroundColor: 'green' }]}>
-      <Text style={styles.overlayLabelText}>Like</Text>
+      <Text style={styles.overlayLabelText}>Keep</Text>
     </View>
   );
   
   const OverlayLeft = () => (
     <View style={[styles.overlayLabelContainer, { backgroundColor: 'red' }]}>
-      <Text style={styles.overlayLabelText}>Nope</Text>
+      <Text style={styles.overlayLabelText}>Delete</Text>
     </View>
   );
 
   const OverlayTop = () => (
     <View style={[styles.overlayLabelContainer, { backgroundColor: 'blue' }]}>
-      <Text style={styles.overlayLabelText}>Super Like</Text>
+      <Text style={styles.overlayLabelText}>Decide Later</Text>
     </View>
   );
 
         return (
             <View style={styles.mediaContainer}>
-              {/* <Text style={styles.header}>Media from {month}</Text> */}
-              {mediaAssets.map((item, index) => (
-                <View style={styles.cardContainer} pointerEvents="box-none" key={index}>
-                  <TinderCard
+                {<View style={styles.cardContainer} pointerEvents="box-none" key={currentIndex}>
+                  <CardItem
                     cardWidth={380}
                     cardHeight={730}
                     OverlayLabelRight={OverlayRight}
                     OverlayLabelLeft={OverlayLeft}
                     OverlayLabelTop={OverlayTop}
                     cardStyle={styles.card}
-                    onSwipedRight={async () => {
-
-                      handleAction("keep")
-                    }}
-                    // onSwipedTop={() => Alert.alert('Swiped Top')}
-                    onSwipedLeft={() => handleAction('delete')}
+                    onSwipedLeft={() => handleAction('delete', currentAsset.assetUri, currentIndex)}
+                    onSwipedRight={() => handleAction('keep', currentAsset.assetUri, currentIndex)}
                   >
-                    <Image source={{ uri: item.uri }} style={styles.image}   resizeMode="cover"/>
-                  </TinderCard>
+                    <Image source={{ uri: currentAsset.assetUri }} onLoad={()=>setCurrentAsset({index:currentIndex, assetUri: currentAsset.assetUri})} style={styles.image}   resizeMode="cover"/>
+                  </CardItem>
                 </View>
-              ))}
+              }
             </View>
           );
-
-        /*
-        // Clean up any previously loaded images
-        return (
-            <View style={styles.mediaContainer}>
-                {previousAsset && (
-                    <Image
-                        source={{ uri: previousAsset.uri }}
-                        style={[styles.image, styles.previousImage]}
-                        resizeMode="cover"
-                        onLoadEnd={() => cleanupImageReferences(previousAsset?.uri)}
-                    />
-                )}
-                {currentAsset && (
-                    <Animated.View
-                        style={[styles.imageContainer, animatedStyle]}
-                    >
-                        <Image
-                            source={{ uri: currentAsset.uri }}
-                            style={styles.image}
-                            resizeMode="cover"
-                            onLoadEnd={() => cleanupImageReferences(previousAsset?.uri)}
-                        />
-                    </Animated.View>
-                )}
-                {nextAsset && (
-                    <Image
-                        source={{ uri: nextAsset.uri }}
-                        style={[styles.image, styles.nextImage]}
-                        resizeMode="cover"
-                        onLoadEnd={() => cleanupImageReferences(previousAsset?.uri)}
-                    />
-                )}
-            </View>
-        );
-        */
        };
     if (!permission) {
         return (
@@ -462,7 +269,8 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
                         style={[styles.button, styles.deleteButton]}
-                        onPress={() => handleAction('delete')}
+                        onPress={() => handleAction('delete', currentAsset.assetUri, currentAsset.index)}
+                        disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Delete</Text>
                     </TouchableOpacity>
@@ -476,6 +284,7 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                     <TouchableOpacity
                         style={[styles.button, styles.skipButton]}
                         onPress={skipCurrent}
+                        disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Share</Text>
                     </TouchableOpacity>
@@ -484,7 +293,8 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
 
                     <TouchableOpacity
                         style={[styles.button, styles.keepButton]}
-                        onPress={() => handleAction('keep')}
+                        onPress={() => handleAction('keep', currentAsset.assetUri, currentAsset.index)}
+                        disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Keep</Text>
                     </TouchableOpacity>
@@ -493,13 +303,13 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                 <TouchableOpacity
                     style={[
                         styles.proceedButton,
-                        { opacity: toDeleteAssets.length > 0 ? 1 : 0.5 },
+                        { opacity: toDeleteUri.length > 0 ? 1 : 0.5 },
                     ]}
                     onPress={proceedToDelete}
-                    disabled={toDeleteAssets.length === 0}
+                    disabled={toDeleteUri.length === 0}
                 >
                     <Text style={styles.buttonText}>
-                        Proceed to Delete ({toDeleteAssets.length})
+                        Proceed to Delete ({toDeleteUri.length})
                     </Text>
                 </TouchableOpacity>
 
@@ -507,7 +317,6 @@ const deleteAssets = async (assets: MediaLibrary.Asset[]) => {
                     {currentIndex + 1} / {mediaAssets.length}
                 </Text>
             </View>
-    // </GestureHandlerRootView> 
     );
 }
 

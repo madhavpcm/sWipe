@@ -189,6 +189,7 @@ export default function Index() {
       const media = await MediaLibrary.getAssetsAsync({
         mediaType: ['photo', 'video'],
         sortBy: ['creationTime'],
+        first: 1000 // Adjust as needed
       });
       
       setMediaAssets(media.assets);

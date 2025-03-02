@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-media-library";
-import ListItem from "react-native-flatboard/lib/components/common/ListItem";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import React from "react";
 
 interface MediaGroup {
   title: string;
