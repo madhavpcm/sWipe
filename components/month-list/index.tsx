@@ -48,7 +48,6 @@ const localMonthToMediaCount: Record<string, number> = {}
 
   })
   setMonthToMediaCount(localMonthToMediaCount)
-  getImageCount(); 
 }, [])
 
   return (
