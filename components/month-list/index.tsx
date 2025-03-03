@@ -6,13 +6,26 @@ import {
   ScrollView,
   Platform,
   TouchableOpacity,
-  FlatList
+  FlatList,
+  NativeModules
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import React from "react";
+const { SwipeCustomMediaModule } = NativeModules;
+
+async function getImageCount() {
+  try {
+    const startTime = Date.now() - 24 * 60 * 60 * 1000*60; // Last 24 hours
+    const endTime = Date.now();
+    const count = await SwipeCustomMediaModule.countImagesBetweenTimestamps(startTime/1000, endTime/1000);
+    console.log(`Images created in last 60d: ${count}`);
+  } catch (error) {
+    console.error("Failed to get image count", error);
+  }
+}
 
 interface MediaGroup {
   title: string;
@@ -35,6 +48,7 @@ const localMonthToMediaCount: Record<string, number> = {}
 
   })
   setMonthToMediaCount(localMonthToMediaCount)
+  getImageCount(); 
 }, [])
 
   return (

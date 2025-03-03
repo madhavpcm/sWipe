@@ -13,7 +13,6 @@ import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
-import com.gomodtidy.swipe.DeleteMediaPackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -26,7 +25,7 @@ class MainApplication : Application(), ReactApplication {
                       // Packages that cannot be autolinked yet can be added manually here, for
                       // example:
                       // packages.add(new MyReactNativePackage());
-                      packages.add(DeleteMediaPackage())
+                      packages.add(SwipeCustomMediaPackage())
                       return packages
                     }
 

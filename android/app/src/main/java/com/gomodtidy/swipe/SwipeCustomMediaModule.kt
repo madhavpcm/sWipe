@@ -10,11 +10,32 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.facebook.react.bridge.*
 
-class DeleteMediaModule(reactContext: ReactApplicationContext) :
+class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
         ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String {
-        return "DeleteMedia"
+        return "SwipeCustomMediaModule"
+    }
+
+    @ReactMethod
+    fun countImagesBetweenTimestamps(startTime: Double, endTime: Double, promise: Promise) {
+        try {
+            val contentResolver = reactApplicationContext.contentResolver
+            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val projection = arrayOf("COUNT(*)")
+            val selection = "${MediaStore.Images.Media.DATE_ADDED} BETWEEN ? AND ?"
+            val selectionArgs = arrayOf((startTime / 1000).toString(), (endTime / 1000).toString())
+
+            contentResolver.query(uri, projection, selection, selectionArgs, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    promise.resolve(cursor.getInt(0)) // Return count to React Native
+                    return
+                }
+            }
+            promise.resolve(0) // No images found
+        } catch (e: Exception) {
+            promise.reject("ERROR_COUNTING_IMAGES", "Failed to count images", e)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.R) // Android 11+
@@ -30,7 +51,7 @@ class DeleteMediaModule(reactContext: ReactApplicationContext) :
                 if (contentUri != null) {
                     urisToDelete.add(contentUri)
                 } else {
-                    Log.e("DeleteMediaModule", "Failed to get content URI for: $filePath")
+                    Log.e("SwipeCustomMediaModule", "Failed to get content URI for: $filePath")
                 }
             }
         }
