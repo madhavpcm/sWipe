@@ -211,7 +211,7 @@ export default function Index() {
     className=""
     >
       
-      <Header />
+      {/* <Header /> */}
       
      
         <View className="flex-1 bg-white font-rubik">

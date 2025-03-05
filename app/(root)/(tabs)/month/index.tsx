@@ -3,7 +3,9 @@ import React from 'react'
 
 const month = () => {
   return (
-    <View>
+    <View
+    className='flex-1 bg-white'
+    >
       <Text>month</Text>
     </View>
   )

@@ -3,7 +3,9 @@ import React from 'react'
 
 const index = () => {
   return (
-    <View>
+    <View
+    className='flex-1 bg-white'
+    >
       <Text>album</Text>
     </View>
   )
