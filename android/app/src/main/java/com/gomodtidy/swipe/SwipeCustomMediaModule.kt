@@ -9,12 +9,63 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.facebook.react.bridge.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
         ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String {
         return "SwipeCustomMediaModule"
+    }
+
+    @ReactMethod
+    fun countImagesByMonthYear(promise: Promise) {
+        try {
+            val contentResolver = reactApplicationContext.contentResolver
+            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val column = MediaStore.Images.Media.DATE_MODIFIED
+            val projection = arrayOf(column)
+
+            val selection = "$column IS NOT NULL"
+            val sortOrder = "$column DESC"
+
+            val results = mutableMapOf<String, Int>()
+            val dateFormat = SimpleDateFormat("yyyy-MM", Locale.getDefault()) // Format timestamps
+
+            val cursor = contentResolver.query(uri, projection, selection, null, sortOrder)
+            val dateIndex = cursor?.getColumnIndex(column) ?: 0
+
+            cursor?.use {
+                it.moveToFirst()
+                if(!it.moveToFirst()){
+                    return
+                }
+                var convertToMilliSeconds = 1
+
+                // ✅ FIX: Ensure timestamp is valid in milliseconds ( >year 2000)
+                if(it.getLong(dateIndex) < 946684800000L){
+                    convertToMilliSeconds=1000
+                }
+                do {
+                    val timestamp = it.getLong(dateIndex)*convertToMilliSeconds // Get timestamp
+                    if (timestamp > 0) {
+                        val monthYear = dateFormat.format(Date(timestamp)) // Convert to YYYY-MM
+                        results[monthYear] = results.getOrDefault(monthYear, 0) + 1
+                    }
+                    else{
+                        println("no time stamp found for image")
+                    }
+
+                } while (it.moveToNext())
+            }
+
+            promise.resolve(Arguments.makeNativeMap(results as Map<String, Any>?))
+
+        } catch (e: Exception) {
+            promise.reject("ERROR_COUNTING_IMAGES", "Failed to count images", e)
+        }
     }
 
     @ReactMethod
@@ -46,7 +97,7 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
 
         for (i in 0 until photos.size()) {
             val filePath = photos.getString(i)
-            if (filePath != null && filePath.startsWith("file://")) {
+            if (filePath.startsWith("file://")) {
                 val contentUri = getContentUriFromFilePath(context, filePath)
                 if (contentUri != null) {
                     urisToDelete.add(contentUri)

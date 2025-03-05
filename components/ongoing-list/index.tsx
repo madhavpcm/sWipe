@@ -1,119 +1,49 @@
 import { View, FlatList, Text, TouchableNativeFeedback } from "react-native";
 import { Title } from "../common/title";
-import React from "react";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { ScrollView } from "react-native-gesture-handler";
+import React, { useEffect, useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
+import { getImageCountByMonthYear } from "@/util/SwipeAndroidLibary";
+import { getMonthNameFromOneBasedIndex } from "@/util/DateUtil";
+
+
+
+const getOngoingListData = async (): Promise<Array<OngoingListDataType>> => {
+    const dataCountByMonthSorted :MediaData[] = await getImageCountByMonthYear();
+
+    // in the same sorted order transform this to OngoingListDataType
+    const transformedData:OngoingListDataType[] = dataCountByMonthSorted.map((item) => {
+        return {
+            name: `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`,
+            type: "Month",
+            progress: 30 / item.count,
+            dateString: "1 month ago",
+        }
+    })
+    
+    
+    return transformedData
+
+}
+
 export const OngoingList = () => {
-    const data = [
-        {
-            name: "February 2025",
-            type: "Month",
-            progress: 0.88, // 88% → 0.88
-            dateString: "2 days ago",
-        },
-        {
-            name: "March 2025",
-            type: "Month",
-            progress: 0.75, // 75% → 0.75
-            dateString: "5 days ago",
-        },
-        {
-            name: "Project Alpha",
-            type: "Album",
-            progress: 0.6, // 60% → 0.6
-            dateString: "1 week ago",
-        },
-        {
-            name: "Q1 Goals",
-            type: "Album",
-            progress: 0.45, // 45% → 0.45
-            dateString: "2 weeks ago",
-        },
-        {
-            name: "February 2025",
-            type: "Month",
-            progress: 0.88,
-            dateString: "2 days ago",
-        },
-        {
-            name: "March 2025",
-            type: "Month",
-            progress: 0.75,
-            dateString: "5 days ago",
-        },
-        {
-            name: "Project Alpha",
-            type: "Album",
-            progress: 0.6,
-            dateString: "1 week ago",
-        },
-        {
-            name: "Q1 Goals",
-            type: "Album",
-            progress: 0.45,
-            dateString: "2 weeks ago",
-        },
-        {
-            name: "March 2025",
-            type: "Month",
-            progress: 0.75,
-            dateString: "5 days ago",
-        },
-        {
-            name: "Project Alpha",
-            type: "Album",
-            progress: 0.6,
-            dateString: "1 week ago",
-        },
-        {
-            name: "Q1 Goals",
-            type: "Album",
-            progress: 0.45,
-            dateString: "2 weeks ago",
-        },
-        {
-            name: "March 2025",
-            type: "Month",
-            progress: 0.75,
-            dateString: "5 days ago",
-        },
-        {
-            name: "Project Alpha",
-            type: "Album",
-            progress: 0.6,
-            dateString: "1 week ago",
-        },
-        {
-            name: "Q1 Goals",
-            type: "Album",
-            progress: 0.45,
-            dateString: "2 weeks ago",
-        },
-        {
-            name: "March 2025",
-            type: "Month",
-            progress: 0.75,
-            dateString: "5 days ago",
-        },
-        {
-            name: "Project Alpha",
-            type: "Album",
-            progress: 0.6,
-            dateString: "1 week ago",
-        },
-        {
-            name: "Q1 Goals",
-            type: "Album",
-            progress: 0.1, // 10% → 0.1
-            dateString: "2 weeks ago",
-        },
-    ];
     
 
+
+    // use state 
+    const [data, setData] = useState<Array<OngoingListDataType>>([]);
+
+    // use effect fetch data
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getOngoingListData();
+            setData(data);
+        };
+        fetchData();
+    }, []);
+
     
-    const CircularProgress = ({ progress, size = 56, strokeWidth = 6 }) => {
+    const CircularProgress = ({ progress, size, strokeWidth }: {progress: number, size: number, strokeWidth: number}) => {
         const radius = (size - strokeWidth) / 2;
         const circumference = 2 * Math.PI * radius;
         const strokeDashoffset = circumference * (1 - Math.max(0, Math.min(progress, 1))); // Ensuring valid range
@@ -145,14 +75,14 @@ export const OngoingList = () => {
             </Svg>
         );
     };
-    
-    const renderItem = ({ item }) => (
+    // define a type for item
+    const renderItem = ({ item } : {item: OngoingListDataType} ) => (
         <TouchableNativeFeedback>
             <View className="flex-row justify-between p-3 border-b border-gray-200">
                 <View className="flex flex-row gap-4 items-center">
                     {/* Circular Progress Around Icon */}
                     <View className="relative">
-                        <CircularProgress progress={item.progress} />
+                        <CircularProgress progress={item.progress} size={56} strokeWidth={6} />
                         <View className="absolute inset-0 flex justify-center items-center">
                             {item.type === "Month" ? (
                                 <MaterialIcons name="calendar-month" size={24} color={"#2563eb"} />

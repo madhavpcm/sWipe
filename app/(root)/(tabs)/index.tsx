@@ -7,7 +7,8 @@ import { Text, View,
   SafeAreaView,
   StyleSheet,
   ToastAndroid,
-  Linking
+  Linking,
+  NativeModules
 } from "react-native";
 import images from "@/constants/images";
 import icons from "@/constants/icons";
@@ -16,7 +17,6 @@ import { useFonts } from "expo-font";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
-//import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
 import Header from "@/components/common/Header";
 import Button from "@/components/common/button";
@@ -27,6 +27,8 @@ import { Banner } from "@/components/home/banner";
 import { OngoingList } from "@/components/ongoing-list";
 import { BottomNav } from "@/components/common/bottom-nav";
   
+
+
   const requestWriteStoragePermission1 = async () => {
     try {
       const permissions = [
@@ -210,21 +212,13 @@ export default function Index() {
     }
     className=""
     >
-      
-      {/* <Header /> */}
-      
-     
         <View className="flex-1 bg-white font-rubik">
           <Banner />
           <OngoingList />
-          
         </View>
-      
     </View>
   );
 }
-
-
 
 
 function shouldShowRequestPermissionRationale(permission: any) {
