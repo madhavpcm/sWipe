@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import { format } from 'date-fns';
-import { SwipeScreenComponent } from '@/components/screens/SwipeScreenComponent';
+import { SwipeScreenComponent } from '@/components/SwipeScreenComponent';
 import React from 'react';
 import { getMediaByMonth } from '@/util/MediaUtil';
 

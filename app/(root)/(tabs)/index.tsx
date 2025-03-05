@@ -7,7 +7,6 @@ import { Text, View,
   SafeAreaView,
   StyleSheet,
   ToastAndroid,
-  Button,
   Linking
 } from "react-native";
 import images from "@/constants/images";
@@ -17,14 +16,16 @@ import { useFonts } from "expo-font";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useState } from "react";
 import * as FileSsystem from 'expo-file-system'
-import StorageChart from '@/components/home-carousel/StorageChart';
-import HomeCarousel from "@/components/home-carousel";
-import MonthList from "@/components/month-list";
+//import MonthList from "@/components/month-list";
 import { format } from 'date-fns';
-import Header from "@/components/Header";
-
+import Header from "@/components/common/Header";
+import Button from "@/components/common/button";
 import  {PermissionsAndroid, Platform}  from 'react-native';
 import React from "react";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Banner } from "@/components/home/banner";
+import { OngoingList } from "@/components/ongoing-list";
+import { BottomNav } from "@/components/common/bottom-nav";
   
   const requestWriteStoragePermission1 = async () => {
     try {
@@ -148,14 +149,8 @@ interface MediaGroup {
 
 export default function Index() {
   const { month, mediaCount } = useLocalSearchParams<{month: string; mediaCount:string;}>();
-  const [storageInfo, setStorageInfo] = useState<StorageInfo>({
-    totalSpace: '0',
-    freeSpace: '0',
-    usedSpace: '0'
-  });
-  const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   
+<<<<<<< HEAD
   const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
   const [monthToMediaCount, setMonthToMediaCount] = useState<Record<string, number>>({})
   const getStorageInfo = async () => {
@@ -216,7 +211,12 @@ export default function Index() {
 
     return Object.entries(groups).map(([title, data]) => ({ title, data }));
   };
+=======
+  
+ 
+>>>>>>> 796b79f (restructue wip)
 
+  
   const onboardData= [
     {
       id: 1,
@@ -250,8 +250,8 @@ export default function Index() {
       if(status === "granted") {
         console.log("Permission granted for expo");
         setisGranted(true);
-        getStorageInfo();
-        getMediaAssets();
+         
+        
       } else {
         console.log("Permission denied");
       }
@@ -259,15 +259,7 @@ export default function Index() {
     checkPermissions()
   }, [])
 
-  useEffect(() => {
-    if (mediaCount) {
-      setMonthToMediaCount(prev => ({
-        ...prev,
-        [month]: Number(mediaCount)
-      }));
-    }
-  }, [mediaCount]);
-
+ 
   const onComplete = async () => {
     console.log("Requesting permissions for media library");
     const {status, accessPrivileges} = await MediaLibrary.requestPermissionsAsync();
@@ -275,15 +267,18 @@ export default function Index() {
     console.log("Permission granted:", accessPrivileges, "status:", status);
     if(status === "granted") {
       setisGranted(true);
-      await getStorageInfo();
-      await getMediaAssets();
     } else {
       console.log("Permission denied");
     }
   }
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{flex: 1}
+    
+    }
+    className=""
+    >
+      <BottomNav />
       <Header />
        {!isGranted && <FlatBoard
         data={onboardData}
@@ -297,27 +292,10 @@ export default function Index() {
         headingStyle={styles.headingStyles}
       />}
       {isGranted && 
-        <View className="flex-1 bg-white">
-          {/* <TouchableOpacity onPress={()=> {router.push(
-        '/'
-      )}}> 
-              <View className="h-20 w-48 bg-black"><Text>Andi</Text></View>
-              
-      </TouchableOpacity> */}
-          <HomeCarousel 
-            storageInfo={storageInfo} 
-            mediaCount={{
-              photos: mediaAssets.filter(a => a.mediaType === 'photo').length,
-              videos: mediaAssets.filter(a => a.mediaType === 'video').length
-            }}
-          />
-          {!isLoading && <MonthList 
-            groupedMedia={groupedMedia}
-            mediaAssets={mediaAssets}
-            setMonthToMediaCount={setMonthToMediaCount}
-            monthToMediaCount={monthToMediaCount}
-            
-          />}
+        <View className="flex-1 bg-white font-rubik">
+          <Banner />
+          <OngoingList />
+          
         </View>
       }
     </View>
