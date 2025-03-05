@@ -68,27 +68,6 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
         }
     }
 
-    @ReactMethod
-    fun countImagesBetweenTimestamps(startTime: Double, endTime: Double, promise: Promise) {
-        try {
-            val contentResolver = reactApplicationContext.contentResolver
-            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-            val projection = arrayOf("COUNT(*)")
-            val selection = "${MediaStore.Images.Media.DATE_ADDED} BETWEEN ? AND ?"
-            val selectionArgs = arrayOf((startTime / 1000).toString(), (endTime / 1000).toString())
-
-            contentResolver.query(uri, projection, selection, selectionArgs, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    promise.resolve(cursor.getInt(0)) // Return count to React Native
-                    return
-                }
-            }
-            promise.resolve(0) // No images found
-        } catch (e: Exception) {
-            promise.reject("ERROR_COUNTING_IMAGES", "Failed to count images", e)
-        }
-    }
-
     @RequiresApi(Build.VERSION_CODES.R) // Android 11+
     @ReactMethod
     fun deletePhotos(photos: ReadableArray, promise: Promise) {
