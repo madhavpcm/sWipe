@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const Explore = () => {
+const month = () => {
   return (
     <View>
-      <Text>E</Text>
+      <Text>month</Text>
     </View>
   )
 }
 
-export default Explore
+export default month

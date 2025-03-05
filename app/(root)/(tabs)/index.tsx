@@ -148,74 +148,6 @@ interface MediaGroup {
 }
 
 export default function Index() {
-  const { month, mediaCount } = useLocalSearchParams<{month: string; mediaCount:string;}>();
-  
-<<<<<<< HEAD
-  const [groupedMedia, setGroupedMedia] = useState<MediaGroup[]>([]);
-  const [monthToMediaCount, setMonthToMediaCount] = useState<Record<string, number>>({})
-  const getStorageInfo = async () => {
-    try {
-      const totalSpace = await FileSsystem.getTotalDiskCapacityAsync();
-      const freeSpace = await FileSsystem.getFreeDiskStorageAsync();
-      
-      // Convert bytes to GB with better precision
-      const totalGB = totalSpace / (1024 * 1024 * 1024);
-      const freeGB = freeSpace / (1024 * 1024 * 1024);
-      const usedGB = totalGB - freeGB;
-
-      setStorageInfo({
-        totalSpace: totalGB.toFixed(2),
-        freeSpace: freeGB.toFixed(2),
-        usedSpace: usedGB.toFixed(2)
-      });
-
-      console.log('Storage Info:', {
-        total: totalGB.toFixed(2),
-        free: freeGB.toFixed(2),
-        used: usedGB.toFixed(2)
-      });
-    } catch (error) {
-      console.error('Error getting storage info:', error);
-    }
-  }
-
-  const getMediaAssets = async () => {
-    try {
-      const media = await MediaLibrary.getAssetsAsync({
-        mediaType: ['photo', 'video'],
-        sortBy: ['creationTime'],
-        first: 1000 // Adjust as needed
-      });
-      
-      setMediaAssets(media.assets);
-      const grouped = groupMediaByMonth(media.assets);
-      setGroupedMedia(grouped);
-    } catch (error) {
-      console.error('Error fetching media:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const groupMediaByMonth = (assets: MediaLibrary.Asset[]): MediaGroup[] => {
-    const groups = assets.reduce((acc: { [key: string]: MediaLibrary.Asset[] }, asset) => {
-      const date = new Date(asset.creationTime);
-      const monthYear = format(date, 'MMMM yyyy');
-      
-      if (!acc[monthYear]) {
-        acc[monthYear] = [];
-      }
-      acc[monthYear].push(asset);
-      return acc;
-    }, {});
-
-    return Object.entries(groups).map(([title, data]) => ({ title, data }));
-  };
-=======
-  
- 
->>>>>>> 796b79f (restructue wip)
-
   
   const onboardData= [
     {
@@ -278,44 +210,22 @@ export default function Index() {
     }
     className=""
     >
-      <BottomNav />
+      
       <Header />
-       {!isGranted && <FlatBoard
-        data={onboardData}
-        onFinish={onComplete}
-        accentColor="#000"
-        backgroundColor="#fff"
-        buttonTitle="Get Started"
-        variant="modern"
-        hideIndicator={false}
-        descriptionStyle={styles.descriptionStyles}
-        headingStyle={styles.headingStyles}
-      />}
-      {isGranted && 
+      
+     
         <View className="flex-1 bg-white font-rubik">
           <Banner />
           <OngoingList />
           
         </View>
-      }
+      
     </View>
   );
 }
 
 
-const styles = StyleSheet.create({
-  headingStyles:{
-    fontSize: 30,
-    color: '#000',
-    textAlign: 'center'
-  },
-  descriptionStyles:{
-    fontSize: 18,
-    color: '#444',
-    textAlign: 'center',
-  
-  }
-})
+
 
 function shouldShowRequestPermissionRationale(permission: any) {
   throw new Error("Function not implemented.");
