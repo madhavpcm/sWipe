@@ -16,7 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import CardItem from './CardItem'
 import {styles} from './Styles'
-import {deleteMedia} from '../util/SwipeAndroidLibary'
+import {deleteMedia} from '@/util/SwipeAndroidLibary'
 
 
 
