@@ -15,7 +15,7 @@ export const Banner = () => {
             
             className="flex justify-center items-start w-full h-full">
             <Text
-            className="text-7xl font-rubik-semibold p-4 text-center text-blue-500"
+            className="text-7xl font-rubik-semibold p-4 text-center text-blue-600"
             >
               50 % <Text
               className="text-black text-2xl font-rubik-medium "
@@ -27,8 +27,8 @@ export const Banner = () => {
               size="md"
               title="More Stats"
               textClassName='text-xl'
-              containerClassName=" absolute -bottom-5 right-5 "
-              borderRadius={15}
+              containerClassName=" flex justify-center absolute -bottom-5 right-5 "
+              borderRadius={100}
               iconPosition="right"
               icon = {<MaterialIcons name="chevron-right" color={"white"} size={24} className="mr-3" />}
               >

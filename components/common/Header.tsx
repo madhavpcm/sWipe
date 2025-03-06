@@ -16,7 +16,7 @@ export default function Header() {
       className="h-24 bg-white flex justify-between px-6 flex-row"
     >
       <Text
-        className="text-4xl font-rubik-semibold text-blue-500"
+        className="text-4xl font-rubik-semibold text-blue-600"
       >
         sWipe
       </Text>
