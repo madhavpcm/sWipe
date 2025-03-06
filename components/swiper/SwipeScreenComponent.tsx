@@ -15,13 +15,9 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import CardItem from './CardItem'
-import { NativeModules } from 'react-native';
 import {styles} from './Styles'
+import {deleteMedia} from '../util/SwipeAndroidLibary'
 
-
-const { SwipeCustomMediaModule } = NativeModules;
-console.log("NativeModules:", NativeModules); // Check if SwipeCustomMediaModule appears here
-console.log("SwipeCustomMediaModule:", NativeModules.SwipeCustomMediaModule); // Check if SwipeCustomMediaModule appears here
 
 
 
@@ -54,26 +50,10 @@ const deleteAssets = async (deleteUris: string[]) => {
   }
 
     try {
-
-        const result =  SwipeCustomMediaModule.deletePhotos(deleteUris)
-        .then(() => {
-          console.log("Image deleted");
-        })
-        .catch((e: { message: any; code: any; }) => {
-          const message = e.message;
-          const code = e.code;
-    
-          switch (code) {
-            case "ERROR_USER_REJECTED":
-              console.log("Image deletion denied by user");
-              break;
-            default:
-              console.log("Error Deleting Media:", message);
-              break;
-          }
-        });
-        console.log('Deleted assets:', result);
-        Alert.alert('Deleted', 'Selected media files have been deleted');
+        const result: Boolean  = await deleteMedia(deleteUris);
+        if(result){
+            Alert.alert('Deleted', 'Selected media files have been deleted');
+        }
         router.push({
             pathname: "/",
             params: {

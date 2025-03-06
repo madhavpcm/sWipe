@@ -1,20 +1,11 @@
 import * as MediaLibrary from 'expo-media-library';
-
+import {getZeroIndexOfMonth} from './DateUtil';
 export async function getMediaByMonth(monthString: string) {
   const [monthName, year] = monthString.split(' ');
   // create object of month index manually
-  const monthMap: Record<string, number>  = {
-    'January': 0, 'February': 1, 'March': 2, 'April': 3,
-    'May': 4, 'June': 5, 'July': 6, 'August': 7,
-    'September': 8, 'October': 9, 'November': 10, 'December': 11
-  };
-  
-  const monthIndex = monthMap[monthName] // Get month index (0-based)
-  console.log("year: ", Number(year))
-  console.log("monthIndex: ", Number(monthIndex))
+  const monthIndex = getZeroIndexOfMonth(monthName) // Get month index (0-based)
   const startDate = new Date(Number(year), Number(monthIndex));
   const endDate = new Date(Number(year), Number(monthIndex + 1)); // First day of next month
-  console.log("createdBefore : ", startDate.toString(), "createdBefore : ", endDate.toString())
 
   const media = await MediaLibrary.getAssetsAsync({
     mediaType: ['photo', 'video'],
@@ -25,4 +16,23 @@ export async function getMediaByMonth(monthString: string) {
   });
 
   return media;
+}
+
+// sort list of media data
+
+export const sortMediaData = (data: MediaData[], byParam: 'monthyear'| 'month' | 'year' | 'count', order: 'asc' | 'desc') => {
+  return data.sort((a, b) => {
+    if(byParam === 'monthyear'){
+      if(order === 'asc'){
+        return a.year - b.year || a.month - b.month;
+      }else{
+        return b.year - a.year || b.month - a.month;
+      }
+    }
+    if (order === 'asc') {
+      return a[byParam] - b[byParam];
+    } else {
+      return b[byParam] - a[byParam];
+    }
+  });
 }
