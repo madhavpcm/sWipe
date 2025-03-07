@@ -8,7 +8,7 @@ export default function TabLayout() {
     return (
         <View className="flex-1">
             {/* Expo Router's Tab Navigator */}
-            <Header />
+          
             <Tabs screenOptions={{ headerShown: false,tabBarStyle:{display:"none"} }}>
                 <Tabs.Screen name="/" />
                 <Tabs.Screen name="album" />
