@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { Title } from '@/components/common/title'
 import { MaterialIcons } from '@expo/vector-icons'
+import MonthList from '@/components/month-list'
 
 const month = () => {
   return (
@@ -32,6 +33,7 @@ const month = () => {
       </TouchableOpacity>
      </View>
      </View>
+     <MonthList />
 
     </View>
   )
