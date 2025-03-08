@@ -4,7 +4,6 @@ import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Header from "@/components/common/Header";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -28,7 +27,6 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Header />
       <Stack
   screenOptions= {{
     headerShown: false,

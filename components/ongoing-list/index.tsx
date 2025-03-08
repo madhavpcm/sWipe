@@ -104,11 +104,11 @@ export const OngoingList = () => {
     
     return (
         <View className="flex-1 px-5 mt-12">
-            <View className="flex flex-row justify-between  ">
+            <View className="flex flex-row justify-between border-b-2  border-gray-200 border-dashed pb-1">
                 <Title text="Ongoing" subtitle="Pickup where you left off" />
             </View>
             <View
-                className="mt-3 h-full pb-12"
+                className="mt-3 h-[400px]"
             >
                 <FlatList
                     className=" "
