@@ -115,7 +115,7 @@ export const OngoingList = () => {
                     data={data}
                     renderItem={renderItem}
                     keyExtractor={(item, index) => index.toString()}
-                    contentContainerStyle={{ paddingBottom: 175 }}
+                    contentContainerStyle={{ paddingBottom: 20 }}
                 />
             </View>
 
