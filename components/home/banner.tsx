@@ -42,26 +42,21 @@ export const Banner = () => {
       colors={["#2563eb", "#1e3a8a"]} 
       className="h-56 w-[92%] mx-auto rounded-2xl relative overflow-hidden shadow-xl flex justify-center items-center p-6"
     >
-      <View
-      className='flex flex-row justify-start items-center w-full h-full gap-x-8 ml-8 '
-      >
-            
+      <View className="absolute top-7 left-7">
         <PieChart percentage={percentage} />
-     
+      </View>
       
-     
-        <Text className="text-gray-100 text-lg font-medium  ">
+      <View className="flex flex-col justify-center items-center w-full absolute top-20">
+        <Text className="text-gray-100 text-lg font-medium text-center">
           Storage Used
         </Text>
-      
       </View>
-
       
       <TouchableOpacity 
-        className="absolute bottom-5 right-5 flex flex-row items-center bg-white/30 px-4 py-2 rounded-full backdrop-blur-lg shadow-md"
+        className="absolute bottom-5 right-5 flex flex-row items-center bg-white/30 px-6 py-3 rounded-full backdrop-blur-lg shadow-md"
         onPress={() => router.push('/(root)/stats')}
       >
-        <Text className="text-white text-base font-semibold">View Stats</Text>
+        <Text className="text-white text-lg font-semibold">View Stats</Text>
         <MaterialIcons name="chevron-right" color="white" size={22} className="ml-2" />
       </TouchableOpacity>
     </LinearGradient>
