@@ -108,7 +108,7 @@ export const OngoingList = () => {
                 <Title text="Ongoing" subtitle="Pickup where you left off" />
             </View>
             <View
-                className="mt-3 h-[400px]"
+                className="mt-3 h-[400px]a"
             >
                 <FlatList
                     className=" "
