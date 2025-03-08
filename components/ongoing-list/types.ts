@@ -9,7 +9,7 @@ interface MonthListDataType {
     name: string,
     thumbnail:string,
     itemCount:number,
-    totalSize:number
+    totalSize:number,
     inProgress?:boolean,
     type?:string,
     dateObj: Date
