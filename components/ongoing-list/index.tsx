@@ -5,6 +5,9 @@ import { MaterialIcons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import { getImageCountByMonthYear } from "@/util/SwipeAndroidLibary";
 import { getMonthNameFromOneBasedIndex } from "@/util/DateUtil";
+import { useRouter, useNavigation } from "expo-router";
+import { MediaData } from "@/common/types/SwipeMediaTypes";
+import { CommonActions } from "@react-navigation/native";
 
 
 
@@ -27,7 +30,7 @@ const getOngoingListData = async (): Promise<Array<OngoingListDataType>> => {
 }
 
 export const OngoingList = () => {
-    
+    const router = useRouter();
 
 
     // use state 
@@ -36,8 +39,8 @@ export const OngoingList = () => {
     // use effect fetch data
     useEffect(() => {
         const fetchData = async () => {
-            const data = await getOngoingListData();
-            setData(data);
+            const localData = await getOngoingListData();
+            setData(localData);
         };
         fetchData();
     }, []);
@@ -76,8 +79,11 @@ export const OngoingList = () => {
         );
     };
     // define a type for item
-    const renderItem = ({ item } : {item: OngoingListDataType} ) => (
-        <TouchableNativeFeedback>
+    const renderItem = ({ item, index } : {item: OngoingListDataType, index: number} ) => (
+        <TouchableNativeFeedback  onPress={() => {
+                //  router.navigate({ pathname: `/swipe/${item.name}`,params:{ monthYear: item.name } });
+                router.push(`/swipe/${item.name}`);
+            }}>
             <View className="flex-row justify-between p-3 border-b border-gray-200">
                 <View className="flex flex-row gap-4 items-center">
                     {/* Circular Progress Around Icon */}

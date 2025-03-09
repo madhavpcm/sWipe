@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     View,
     Image,
     TouchableOpacity,
     Text,
-    Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
-import * as MediaLibrary from 'expo-media-library';
 import { Video } from 'expo-av';
 import {
     useAnimatedStyle,
@@ -17,29 +17,123 @@ import { useRouter } from 'expo-router';
 import CardItem from './CardItem'
 import {styles} from './Styles'
 import {deleteMedia} from '@/util/SwipeAndroidLibary'
+import Trie from '@/util/Trie';
+import { loadFromAsycStorage, loadTrieFromAsycStorage, saveToAsyncStorage } from '@/util/AsyncStorageUtil';
+import { TrieEntryType } from '@/common/types/TrieTypes';
+import { SwipeComponentInputType, CurrentAssetType, ActionHistoryType } from '@/common/types/SwipeMediaTypes';
 
-
-
-
-export function SwipeScreenComponent({mediaAssets, month}:{mediaAssets: MediaLibrary.Asset[],  month:string}) {
+export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputType) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [permission, setPermission] = useState<string | null>('granted');
     const [isPlaying, setIsPlaying] = useState(false);
     const [toDeleteUri, setToDeleteUri] = useState<Array<string>>([]);
     const [toKeepUri, setToKeepUri] = useState<Array<string>>([]);
-    const [currentAsset, setCurrentAsset] = useState<{index: number, assetUri: string}>({index: 0, assetUri: ''});
-    const [actionHistory, setActionHistory] = useState<Array<{index: number, action: string, assetUri: string}>>([])
+    const [currentAsset, setCurrentAsset] = useState<CurrentAssetType>({index: 0, assetUri: ''});
+    const [actionHistory, setActionHistory] = useState<Array<ActionHistoryType>>([])
     const videoRef = useRef<Video | null>(null);
+    const [actionTrie, setActionTrie] = useState<Trie | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        console.debug("creating action trie for month, use memo triggered: ", month)
+        const refreshActionTree = async() => {
+            setActionHistory([])
+            setCurrentAsset({index: 0, assetUri: ''})
+            setCurrentIndex(0)
+            setIsLoading(true)
+            try{
+                if(actionTrie){
+                    actionTrie.setCurrentIndex(currentIndex)
+                    actionTrie.setActionHistory(actionHistory)
+                    actionTrie.destroy()
+                    saveToAsyncStorage<ActionHistoryType[]>(month+"-action-history", actionHistory)
+                }
+        
+                const trie = await loadFromLocalStorage(month)
+                setActionTrie(trie)
+                setIsLoading(false)
+
+            }catch(e){
+                console.error("error creating action trie", e)
+            }
+            finally{
+            }
+        }
+        if(mediaAssets.length>0){
+            refreshActionTree()
+        }
+    }, [month, mediaAssets])
+
+    useEffect(() => {
+        return () => {
+            console.debug("unmounting")
+            setIsLoading(true)
+        }
+    }, [])
+
+    // use effect for health checking all the needed states and set loading to false
+    useEffect(() => {
+        // if all of the deps are in valid state set loading to false
+        if(currentIndex>-1 && actionHistory?.length===0 && actionTrie?.currentIndex===currentIndex && mediaAssets.length>0 && toDeleteUri.length===0 && toKeepUri.length===0){
+            setIsLoading(false)
+        }
+        
+    }, [currentIndex, actionHistory, actionTrie, mediaAssets, toDeleteUri, toKeepUri, month])
+
+    const loadFromLocalStorage = async (key: string): Promise<Trie> => {
+        
+        const trieName = key+"-action-trie"
+        try{
+        let loadedActionTrie = await loadTrieFromAsycStorage(trieName)
+        if(!loadedActionTrie){
+            console.debug("No action trie found in local storage: ", trieName)
+            loadedActionTrie = new Trie(trieName)
+        }
+        const localActionHistory = loadedActionTrie.getActionHistory()
+        console.debug("local action history size: ", localActionHistory.length)
+        console.debug("entered load from local storage, media assets size: ", mediaAssets.length)
+        // make local to keep and to delete uri
+        const localToDeleteUri = new Array<string>()
+        const localToKeepUri = new Array<string>()
+        let localCurrentIndex = loadedActionTrie.getCurrentIndex()
+        mediaAssets.forEach((asset, index) => {
+            const assetUri = asset.uri;
+            const action = loadedActionTrie.search(assetUri);
+            if (action === TrieEntryType.TO_KEEP) {
+                localToKeepUri.push(assetUri);
+            } else if (action === TrieEntryType.TO_DELETE) {
+                localToDeleteUri.push(assetUri);
+            } else if (action !== TrieEntryType.TO_SKIP && localCurrentIndex<0) {
+                localCurrentIndex = index
+            }
+        })
+        const localAssetUri = mediaAssets[localCurrentIndex]?.uri
+        if(!localAssetUri){
+            console.error("No asset uri found in local storage: ", localAssetUri)
+        }
+        setCurrentAsset({index: localCurrentIndex ,assetUri: localAssetUri});
+        setCurrentIndex(localCurrentIndex)
+        setToDeleteUri(localToDeleteUri)
+        setToKeepUri(localToKeepUri)
+        setActionHistory(localActionHistory)
+        console.debug("local current index: ", localCurrentIndex)
+        
+    
+        return loadedActionTrie
+        }catch(error){
+            console.error("error loading action trie from local storage: ", error)
+            return new Trie(trieName)
+        }
+    }
+
+ 
 
     const translateX = useSharedValue(0);
     // log mediaassets
-    console.log('Media assets:', mediaAssets);
+    console.debug('Media assets length:', mediaAssets.length);
+    // local assets length
+    console.debug('Stored media assets length:', mediaAssets.length);
     const router = useRouter();
-
-    useEffect(() => {
-        setCurrentAsset({index: currentIndex,assetUri: mediaAssets[currentIndex]?.uri});
-    }, [mediaAssets]);
-
 
 
 const deleteAssets = async (deleteUris: string[]) => {
@@ -51,8 +145,20 @@ const deleteAssets = async (deleteUris: string[]) => {
 
     try {
         const result: Boolean  = await deleteMedia(deleteUris);
+        if(!actionTrie){
+            console.error('No action trie found in local storage');
+            return
+        }
         if(result){
             Alert.alert('Deleted', 'Selected media files have been deleted');
+            // clear to delete from trie
+            toDeleteUri.forEach((uri) => {
+                actionTrie.delete(uri);
+            })
+            // save trie
+            await saveToAsyncStorage<Trie>(month+"-action-trie", actionTrie)
+            setToDeleteUri([])           
+
         }
         router.push({
             pathname: "/",
@@ -69,7 +175,16 @@ const deleteAssets = async (deleteUris: string[]) => {
   };
 
     const handleAction = (action: string, uri:string, index: number) => {
+        if(!actionTrie){
+            console.error('No action trie found in local storage');
+            return
+        }
+        if(!actionHistory){
+            console.error('No action history object found to execute action');
+            return
+        }
 
+        console.debug("Trie size before action", actionTrie.size())
         // Record the action in history
         setActionHistory((prev) => [
             ...prev,
@@ -83,21 +198,34 @@ const deleteAssets = async (deleteUris: string[]) => {
         // Handle specific actions
         if (action === 'delete') {
             setToDeleteUri((prev) => [...prev, uri]);
+            // add to delete trie
+            actionTrie.insert(uri, TrieEntryType.TO_DELETE);
         }
         if (action === 'keep') {
             setToKeepUri((prev) => [...prev, uri]);
+            // add to keep trie
+            actionTrie.insert(uri, TrieEntryType.TO_KEEP);
+        }
+
+        if (action === 'skip') {
+            actionTrie.insert(uri, TrieEntryType.TO_SKIP);
         }
         // Move to the next asset
         // set next asset as current asset
         if (currentIndex < mediaAssets.length - 1) {
-            setCurrentAsset({index: currentIndex + 1,  assetUri: mediaAssets[currentIndex + 1]?.uri});
+            setCurrentAsset({index: currentIndex + 1,  assetUri: mediaAssets[currentIndex + 1].uri});
             setCurrentIndex((prev) => prev + 1);
         }
         
+        console.debug("Trie size after action", actionTrie.size())
 
     };
 
     const undoLastAction = () => {
+        if(!actionTrie){
+            console.error('No action trie found in local storage');
+            return
+        }
         if (actionHistory.length > 0) {
             const lastAction = actionHistory[actionHistory.length - 1];
 
@@ -118,6 +246,8 @@ const deleteAssets = async (deleteUris: string[]) => {
                     prev.filter((uri) => uri !== lastAction.assetUri)
                 );
             }
+            // remove from trie
+            actionTrie.delete(lastAction.assetUri);
 
             // Go back to the previous index
             setCurrentIndex(lastAction.index);
@@ -141,53 +271,36 @@ const deleteAssets = async (deleteUris: string[]) => {
     const renderMediaItem = () => {
 
   
-const getOverlayLabel = (action: string) => {
-    let backgroundColor = '';
-    let text = '';
-    switch (action) {
-      case 'delete':
-        backgroundColor = 'red';
-        text = 'Delete';
-        break;
-      case 'keep':
-        backgroundColor = 'green';
-        text = 'Keep';
-        break;
-      case 'skip':
-        backgroundColor = 'blue';
-        text = 'Decide Later';
-        break;
-      default:
-        break;
-    }
-    return (
-      <View style={[styles.overlayLabelContainer, { backgroundColor }]}>
-        <Text style={styles.overlayLabelText}>{text}</Text>
-      </View>
-    );
-  };
-  
-//   const OverlayRight = () => (
-//     <View style={[styles.overlayLabelContainer, { backgroundColor: 'green' }]}>
-//       <Text style={styles.overlayLabelText}>Keep</Text>
-//     </View>
-//   );
-  
-//   const OverlayLeft = () => (
-//     <View style={[styles.overlayLabelContainer, { backgroundColor: 'red' }]}>
-//       <Text style={styles.overlayLabelText}>Delete</Text>
-//     </View>
-//   );
-
-//   const OverlayTop = () => (
-//     <View style={[styles.overlayLabelContainer, { backgroundColor: 'blue' }]}>
-//       <Text style={styles.overlayLabelText}>Decide Later</Text>
-//     </View>
-//   );
+        const getOverlayLabel = (action: string) => {
+            let backgroundColor = '';
+            let text = '';
+            switch (action) {
+            case 'delete':
+                backgroundColor = 'red';
+                text = 'Delete';
+                break;
+            case 'keep':
+                backgroundColor = 'green';
+                text = 'Keep';
+                break;
+            case 'skip':
+                backgroundColor = 'blue';
+                text = 'Decide Later';
+                break;
+            default:
+                break;
+            }
+            return (
+            <View style={[styles.overlayLabelContainer, { backgroundColor }]}>
+                <Text style={styles.overlayLabelText}>{text}</Text>
+            </View>
+            );
+        };
+        
 
         return (
             <View style={styles.mediaContainer}>
-                {<View style={styles.cardContainer} pointerEvents="box-none" key={currentIndex}>
+                {isLoading? (<ActivityIndicator size="large" color="blue" />) :( <View style={styles.cardContainer} pointerEvents="box-none" key={currentIndex}>
                   <CardItem
                     cardWidth={380}
                     cardHeight={730}
@@ -200,11 +313,22 @@ const getOverlayLabel = (action: string) => {
                   >
                     <Image source={{ uri: currentAsset.assetUri }} onLoad={()=>setCurrentAsset({index:currentIndex, assetUri: currentAsset.assetUri})} style={styles.image}   resizeMode="cover"/>
                   </CardItem>
-                </View>
+                </View>)
               }
             </View>
           );
-       };
+    
+    };
+
+    if(isLoading){
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="blue" />
+            </View>
+        )
+    }
+
+
     if (!permission) {
         return (
             <View style={styles.container}>
@@ -214,7 +338,6 @@ const getOverlayLabel = (action: string) => {
             </View>
         );
     }
-
     if (mediaAssets.length === 0) {
         return (
             <View style={styles.container}>
@@ -229,7 +352,7 @@ const getOverlayLabel = (action: string) => {
         // <GestureHandlerRootView style={styles.container}>
             <View style={styles.container}>
                 <View style={styles.header}>
-                    {actionHistory.length > 0 && (
+                    {actionHistory?.length > 0 && (
                         <TouchableOpacity
                             style={styles.undoButton}
                             onPress={undoLastAction}
@@ -255,13 +378,13 @@ const getOverlayLabel = (action: string) => {
                     </View>
 
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.button, styles.deleteButton]}
                         onPress={() => handleAction('delete', currentAsset.assetUri, currentAsset.index)}
                         disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Delete</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     {/* <TouchableOpacity
                         style={[styles.button, styles.skipButton]}
@@ -269,23 +392,23 @@ const getOverlayLabel = (action: string) => {
                     >
                         <Text style={styles.buttonText}>Skip</Text>
                     </TouchableOpacity> */}
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.button, styles.skipButton]}
                         onPress={() => handleAction('skip', currentAsset.assetUri, currentAsset.index)}
                         disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Share</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
 
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.button, styles.keepButton]}
                         onPress={() => handleAction('keep', currentAsset.assetUri, currentAsset.index)}
                         disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Keep</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 <TouchableOpacity

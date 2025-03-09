@@ -1,6 +1,7 @@
 import { NativeModules } from "react-native";
 import { getMonthNameFromOneBasedIndex } from "./DateUtil";
 import { sortMediaData } from "./MediaUtil";
+import { MediaData } from "@/common/types/SwipeMediaTypes";
 
 const { SwipeCustomMediaModule } = NativeModules;
 
