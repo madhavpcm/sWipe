@@ -103,7 +103,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // load from async storage with type  Trie
 export const loadTrieFromAsycStorage = async (key: string): Promise<Trie | null> => {
     try {
-        const storedValue = await AsyncStorage.getItem(key);
+        const storedValue = await AsyncStorage.getItem(key.replaceAll(" ", "-"), ()=>{console.debug("successfully loaded trie", key)});
         if (storedValue) {
             return Trie.fromSerializedString(storedValue);
         }
@@ -118,7 +118,8 @@ export const loadTrieFromAsycStorage = async (key: string): Promise<Trie | null>
 // save to async storage with type  Trie
 export const saveTrieToAsycStorage = async (key: string, trie: Trie) => {
     try {
-        await AsyncStorage.setItem(key, trie.toSerializedString());
+        console.log("saving trie", trie.name)
+        await AsyncStorage.setItem(key.replaceAll(" ", "-"), trie.toSerializedString(), ()=>{console.debug("successfully saved trie", trie.name)});
     } catch (error) {
         console.error("Failed to save trie:", error);
     }
@@ -128,7 +129,7 @@ export const saveTrieToAsycStorage = async (key: string, trie: Trie) => {
 // generic load funciton with type T
 export const loadFromAsycStorage = async <T>(key: string): Promise<T | null> => {
     try {
-        const storedValue = await AsyncStorage.getItem(key);
+        const storedValue = await AsyncStorage.getItem(key.replaceAll(" ", "-"));
         if (storedValue) {
             return JSON.parse(storedValue) as T;
         }
@@ -143,7 +144,7 @@ export const loadFromAsycStorage = async <T>(key: string): Promise<T | null> => 
 // generic save function with type T
 export const saveToAsyncStorage = async <T>(key: string, value: T): Promise<boolean> => {
     try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
+        await AsyncStorage.setItem(key.replaceAll(" ", "-"), JSON.stringify(value));
         return true;
     } catch (error) {
         console.error("Failed to save value:", error);

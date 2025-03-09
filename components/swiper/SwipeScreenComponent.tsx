@@ -18,7 +18,7 @@ import CardItem from './CardItem'
 import {styles} from './Styles'
 import {deleteMedia} from '@/util/SwipeAndroidLibary'
 import Trie from '@/util/Trie';
-import { loadFromAsycStorage, loadTrieFromAsycStorage, saveToAsyncStorage } from '@/util/AsyncStorageUtil';
+import { loadFromAsycStorage, loadTrieFromAsycStorage, saveToAsyncStorage, saveTrieToAsycStorage } from '@/util/AsyncStorageUtil';
 import { TrieEntryType } from '@/common/types/TrieTypes';
 import { SwipeComponentInputType, CurrentAssetType, ActionHistoryType } from '@/common/types/SwipeMediaTypes';
 
@@ -35,57 +35,33 @@ export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputTyp
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        console.debug("creating action trie for month, use memo triggered: ", month)
-        const refreshActionTree = async() => {
-            setActionHistory([])
-            setCurrentAsset({index: 0, assetUri: ''})
-            setCurrentIndex(0)
-            setIsLoading(true)
-            try{
-                if(actionTrie){
-                    actionTrie.setCurrentIndex(currentIndex)
-                    actionTrie.setActionHistory(actionHistory)
-                    actionTrie.destroy()
-                    saveToAsyncStorage<ActionHistoryType[]>(month+"-action-history", actionHistory)
-                }
-        
-                const trie = await loadFromLocalStorage(month)
-                setActionTrie(trie)
-                setIsLoading(false)
-
-            }catch(e){
-                console.error("error creating action trie", e)
+        console.debug("use effect mounting:", month);
+        const refreshActionTree = async () => {
+            try {
+                setIsLoading(true);
+                await loadFromLocalStorage(month);
+                setIsLoading(false);
+            } catch (e) {
+                console.error("error creating action trie", e);
             }
-            finally{
-            }
+        };
+        if (mediaAssets.length > 0) {
+            refreshActionTree();
         }
-        if(mediaAssets.length>0){
-            refreshActionTree()
-        }
-    }, [month, mediaAssets])
-
+    },[month, mediaAssets]); // Corrected dependency array
     useFocusEffect(useCallback(() => {
+        console.debug("use focus effect mounting:" , month)      
+  
         return () => {
-            console.debug("use focus effect unmounting")
+            console.debug("use focus effect unmounting: ", actionTrie?.name)
             if(actionTrie){
-                actionTrie.setCurrentIndex(currentIndex)
-                actionTrie.setActionHistory(actionHistory)
-                actionTrie.destroy()
-                saveToAsyncStorage<ActionHistoryType[]>(month+"-action-history", actionHistory)
+                saveTrieToAsycStorage(actionTrie.name, actionTrie)
             }
         }   
-    }, []))
+    }, [actionTrie]))
 
-    // use effect for health checking all the needed states and set loading to false
-    useEffect(() => {
-        // if all of the deps are in valid state set loading to false
-        if(currentIndex>-1 && actionHistory?.length===0 && actionTrie?.currentIndex===currentIndex && mediaAssets.length>0 && toDeleteUri.length===0 && toKeepUri.length===0){
-            setIsLoading(false)
-        }
-        
-    }, [currentIndex, actionHistory, actionTrie, mediaAssets, toDeleteUri, toKeepUri, month])
 
-    const loadFromLocalStorage = async (key: string): Promise<Trie> => {
+    const loadFromLocalStorage = async (key: string): Promise<void> => {
         
         const trieName = key+"-action-trie"
         try{
@@ -122,12 +98,11 @@ export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputTyp
         setToKeepUri(localToKeepUri)
         setActionHistory(localActionHistory)
         console.debug("local current index: ", localCurrentIndex)
-        
+        setActionTrie(loadedActionTrie)    
     
-        return loadedActionTrie
         }catch(error){
             console.error("error loading action trie from local storage: ", error)
-            return new Trie(trieName)
+            throw error
         }
     }
 
@@ -191,14 +166,18 @@ const deleteAssets = async (deleteUris: string[]) => {
 
         console.debug("Trie size before action", actionTrie.size())
         // Record the action in history
-        setActionHistory((prev) => [
+        setActionHistory((prev) => {
+            const nextVal = [
             ...prev,
             {
                 index: currentIndex,
                 action,
                 assetUri: uri,
             },
-        ]);
+        ]
+        actionTrie.setActionHistory(nextVal)
+        return nextVal
+    });
 
         // Handle specific actions
         if (action === 'delete') {
@@ -219,6 +198,7 @@ const deleteAssets = async (deleteUris: string[]) => {
         // set next asset as current asset
         if (currentIndex < mediaAssets.length - 1) {
             setCurrentAsset({index: currentIndex + 1,  assetUri: mediaAssets[currentIndex + 1].uri});
+            actionTrie.setCurrentIndex(currentIndex + 1);
             setCurrentIndex((prev) => prev + 1);
         }
         
@@ -235,7 +215,12 @@ const deleteAssets = async (deleteUris: string[]) => {
             const lastAction = actionHistory[actionHistory.length - 1];
 
             // Remove the last action from history
-            setActionHistory((prev) => prev.slice(0, -1));
+            setActionHistory((prev) => {
+                const nextVal = prev.slice(0, -1)
+                actionTrie.setActionHistory(nextVal)
+                return nextVal
+            });
+            
 
             // If it was a delete action, remove from delete list
             if (lastAction.action === 'delete') {
@@ -253,8 +238,8 @@ const deleteAssets = async (deleteUris: string[]) => {
             }
             // remove from trie
             actionTrie.delete(lastAction.assetUri);
-
             // Go back to the previous index
+            actionTrie.setCurrentIndex(lastAction.index);
             setCurrentIndex(lastAction.index);
             setCurrentAsset({index: lastAction.index, assetUri: lastAction.assetUri});
 

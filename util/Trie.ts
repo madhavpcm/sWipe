@@ -99,7 +99,8 @@ class TrieNode {
   
     toSerializedString(): string {
       // store all data of this trie to a single string, root, count, name, currentIndex
-     console.debug("Saving trie to storage:");
+     console.debug("Saving trie to storage:", JSON.stringify(this));
+
       return JSON.stringify(this);
     
     }
@@ -109,8 +110,9 @@ class TrieNode {
       // load all data from the serialized string
       try{
       const {root, count, name, currentIndex, actionHistory} = JSON.parse(serializedObjString);
+        const test = JSON.parse(serializedObjString);
       // console debug every step
-      console.debug("Loaded trie from storage:", name, "with count:", count, "and current index:", currentIndex, "and action history:", actionHistory, "and root:", root);
+      console.debug("Loaded trie from storage:", test);
       const trie = new Trie(name);
       trie.root = root;
       trie.count = count;
