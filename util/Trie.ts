@@ -99,7 +99,7 @@ class TrieNode {
   
     toSerializedString(): string {
       // store all data of this trie to a single string, root, count, name, currentIndex
-     console.debug("Saving trie to storage:", JSON.stringify(this));
+     console.debug("Saving trie to storage:");
       return JSON.stringify(this);
     
     }

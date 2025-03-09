@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
     View,
     Image,
@@ -13,7 +13,7 @@ import {
     useSharedValue,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import CardItem from './CardItem'
 import {styles} from './Styles'
 import {deleteMedia} from '@/util/SwipeAndroidLibary'
@@ -64,12 +64,17 @@ export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputTyp
         }
     }, [month, mediaAssets])
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         return () => {
-            console.debug("unmounting")
-            setIsLoading(true)
-        }
-    }, [])
+            console.debug("use focus effect unmounting")
+            if(actionTrie){
+                actionTrie.setCurrentIndex(currentIndex)
+                actionTrie.setActionHistory(actionHistory)
+                actionTrie.destroy()
+                saveToAsyncStorage<ActionHistoryType[]>(month+"-action-history", actionHistory)
+            }
+        }   
+    }, []))
 
     // use effect for health checking all the needed states and set loading to false
     useEffect(() => {
