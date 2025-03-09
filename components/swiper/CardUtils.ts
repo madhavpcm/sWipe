@@ -1,6 +1,6 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import Animated, { runOnJS, withSpring } from 'react-native-reanimated';
-
+import { styles } from './Styles';
 const { width: windowWidth, height: windowHeight } = Dimensions.get('screen');
 
 const userConfig = {

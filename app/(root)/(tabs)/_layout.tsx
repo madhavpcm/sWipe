@@ -13,6 +13,7 @@ export default function TabLayout() {
                 <Tabs.Screen name="/" />
                 <Tabs.Screen name="album" />
                 <Tabs.Screen name="month" />
+                <Tabs.Screen name="swipe" />
             </Tabs>
 
             {/* Custom Bottom Navigation */}
