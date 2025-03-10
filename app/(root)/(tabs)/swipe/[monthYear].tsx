@@ -7,33 +7,31 @@ import React from 'react';
 import { getMediaByMonth } from '@/util/MediaUtil';
 import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 
-
 export default function SwipeScreen() {
-  const { month } = useLocalSearchParams<{month: string}>();
+  const { monthYear } = useLocalSearchParams<{monthYear: string}>();
   const [mediaAssets, setMediaAssets] = useState<MediaLibrary.Asset[]>([]);
+
 
   useEffect(() => {
     const loadAssets = async () => {
-      if(month == null || month ===""){
+      console.debug("Month Year: ", monthYear)
+
+      if(monthYear == null || monthYear ===""){
         return
       }
-      console.log("Month : ", month)
       try {
-      
-        const media = await getMediaByMonth(month)
+
+        const media = await getMediaByMonth(monthYear)
 
         // Filter assets for the selected month
         const monthAssets = media.assets.filter(asset => {
           const assetDate = new Date(asset.creationTime);
           // need only month year like February 2025
           const assetMonth = format(assetDate, 'MMMM yyyy');
-
-          console.log(assetMonth, month);
-          
-          return assetMonth.trim() === month.trim();
+          return assetMonth.trim() === monthYear.trim();
         });
 
-        console.log(`Found ${monthAssets.length} assets for ${month}`);
+        console.debug(`Found ${monthAssets.length} assets for ${monthYear}`);
         setMediaAssets(monthAssets);
       } catch (error) {
         console.error('Error loading assets:', error);
@@ -41,12 +39,12 @@ export default function SwipeScreen() {
     };
 
      loadAssets();
-  }, [month]);
+  }, [monthYear]);
 
   return (
 
     <View className="flex-1 bg-white p-4">
-      <SwipeScreenComponent mediaAssets={mediaAssets} month={month}/>
+      <SwipeScreenComponent mediaAssets={mediaAssets} month={monthYear}/>
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import * as MediaLibrary from 'expo-media-library';
 import {getZeroIndexOfMonth} from './DateUtil';
+import { MediaData } from '@/common/types/SwipeMediaTypes';
 export async function getMediaByMonth(monthString: string) {
   const [monthName, year] = monthString.split(' ');
   // create object of month index manually
@@ -12,7 +13,7 @@ export async function getMediaByMonth(monthString: string) {
     sortBy: ['creationTime'],
     createdAfter: startDate,
     createdBefore: endDate,
-    first: 1000 // Adjust as needed
+    first: 10000 // Adjust as needed
   });
 
   return media;

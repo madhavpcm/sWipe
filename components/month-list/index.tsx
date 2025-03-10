@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { getMonthNameFromOneBasedIndex } from '@/util/DateUtil';
 import { getImageCountByMonthYear } from '@/util/SwipeAndroidLibary';
 import images from '@/constants/images';
+import { MediaData } from '@/common/types/SwipeMediaTypes';
 
 const MonthList = () => {
     const [monthListData, setMonthListData] = useState<MonthListDataType[]>([]);
@@ -37,7 +38,7 @@ const MonthList = () => {
                 }`}
             >
                 {/* Thumbnail Image */}
-                <Image source={item.thumbnail} className="w-14 h-14 rounded-lg mr-4" />
+                <Image src={item.thumbnail} className="w-14 h-14 rounded-lg mr-4" />
     
                 {/* Text Info */}
                 <View className="flex-1">
