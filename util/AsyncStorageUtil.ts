@@ -1,4 +1,3 @@
-import { SwipeSerializable } from "@/common/types/SwipeMediaTypes";
 import Trie from "./Trie"; // Adjust path as needed
 import AsyncStorage from "@react-native-async-storage/async-storage";
 

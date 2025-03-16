@@ -3,22 +3,24 @@ import { Title } from "../common/title";
 import React, { useEffect, useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
-import { getImageCountByMonthYear } from "@/util/SwipeAndroidLibary";
+import { getImageCountByAlbumName } from "@/util/SwipeAndroidLibary";
 import { getMonthNameFromOneBasedIndex } from "@/util/DateUtil";
 import { useRouter, useNavigation } from "expo-router";
-import { MediaData, SwipeScreenKeyType } from "@/common/types/SwipeMediaTypes";
+import { AlbumMediaData, MediaData, SwipeScreenKeyType } from "@/common/types/SwipeMediaTypes";
 import { CommonActions } from "@react-navigation/native";
+import { SwipeScreenComponent } from "../swiper/SwipeScreenComponent";
 
 
 
 const getOngoingListData = async (): Promise<Array<OngoingListDataType>> => {
-    const dataCountByMonthSorted :MediaData[] = await getImageCountByMonthYear();
-
+    console.debug("get ongoing list at album");
+    const dataCountByMonthSorted :AlbumMediaData[] = await getImageCountByAlbumName();
+    console.debug("dataCountByMonthSorted:", dataCountByMonthSorted);
     // in the same sorted order transform this to OngoingListDataType
     const transformedData:OngoingListDataType[] = dataCountByMonthSorted.map((item) => {
         return {
-            name: `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`,
-            type: "Month",
+            name: item.album,
+            type: "Album",
             progress: 30 / item.count,
             dateString: "1 month ago",
         }
@@ -29,7 +31,7 @@ const getOngoingListData = async (): Promise<Array<OngoingListDataType>> => {
 
 }
 
-export const OngoingList = () => {
+const AlbumList = () => {
     const router = useRouter();
 
 
@@ -41,6 +43,7 @@ export const OngoingList = () => {
         const fetchData = async () => {
             const localData = await getOngoingListData();
             setData(localData);
+            console.debug("set ongoing list at album:", localData);
         };
         fetchData();
     }, []);
@@ -82,7 +85,12 @@ export const OngoingList = () => {
     const renderItem = ({ item, index } : {item: OngoingListDataType, index: number} ) => (
         <TouchableNativeFeedback  onPress={() => {
                 //  router.navigate({ pathname: `/swipe/${item.name}`,params:{ monthYear: item.name } });
-                router.push(`/swipe/${SwipeScreenKeyType.MONTH}/${item.name}`);
+                // router.push(`/swipe/${item.name}`);
+                // pass two dynamic rountes /swipe/:type/:monthYear
+                // router push screen
+                console.debug("navigating to swipe screen with params:", item);
+                router.push(`/swipe/${SwipeScreenKeyType.ALBUM}/${item.name}`);
+            
             }}>
             <View className="flex-row justify-between p-3 border-b border-gray-200">
                 <View className="flex flex-row gap-4 items-center">
@@ -111,7 +119,7 @@ export const OngoingList = () => {
     return (
         <View className="flex-1 px-5 mt-12">
             <View className="flex flex-row justify-between border-b-2  border-gray-200 border-dashed pb-1">
-                <Title text="Ongoing" subtitle="Pickup where you left off" />
+                <Title text="Ongoing Albums" subtitle="Pickup where you left off" />
             </View>
             <View
                 className="mt-3 h-[400px]"
@@ -128,3 +136,5 @@ export const OngoingList = () => {
         </View>
     );
 };
+
+export default AlbumList

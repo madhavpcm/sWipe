@@ -1,6 +1,6 @@
 import { TrieEntryType } from "@/common/types/TrieTypes";
 import { saveToAsyncStorage, saveTrieToAsycStorage } from "./AsyncStorageUtil";
-import { ActionHistoryType, SwipeSerializable } from "@/common/types/SwipeMediaTypes";
+import { ActionHistoryType } from "@/common/types/SwipeMediaTypes";
 
 class TrieNode {
     children: Record<string, TrieNode>;

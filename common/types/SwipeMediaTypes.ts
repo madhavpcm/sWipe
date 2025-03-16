@@ -1,5 +1,9 @@
 import {Asset} from "expo-media-library";
 
+export interface AlbumMediaData{
+    album: string,
+    count: number
+}
 export interface MediaData {
     month: number;
     year: number;
@@ -22,7 +26,17 @@ export interface SwipeComponentInputType{
     month:string
 }
 
-export interface SwipeSerializable {
-    fromSerializedString(serializedObjString: string): void
-    toSerializedString(): string
+export interface MediaListDataType {
+    name: string,
+    thumbnail:string,
+    itemCount:number,
+    totalSize:number,
+    inProgress?:boolean,
+    type?:string,
+    dateObj: Date
+}
+
+export enum SwipeScreenKeyType{
+    MONTH,
+    ALBUM
 }
