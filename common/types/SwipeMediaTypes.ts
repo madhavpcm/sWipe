@@ -24,6 +24,7 @@ export interface ActionHistoryType{
 export interface SwipeComponentInputType{
     mediaAssets: Asset[];
     month:string
+    screenKeyType:string
 }
 
 export interface MediaListDataType {
@@ -31,7 +32,7 @@ export interface MediaListDataType {
     thumbnail:string,
     itemCount:number,
     totalSize:number,
-    inProgress?:boolean,
+    progress:number,
     type?:string,
     dateObj: Date
 }
