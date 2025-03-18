@@ -3,16 +3,16 @@ import React, { useEffect, useState } from 'react';
 import { getMonthNameFromOneBasedIndex } from '@/util/DateUtil';
 import { getImageCountByMonthYear } from '@/util/SwipeAndroidLibary';
 import images from '@/constants/images';
-import { MediaData } from '@/common/types/SwipeMediaTypes';
+import { MediaData, MediaListDataType } from '@/common/types/SwipeMediaTypes';
 
 const MonthList = () => {
-    const [monthListData, setMonthListData] = useState<MonthListDataType[]>([]);
+    const [monthListData, setMonthListData] = useState<MediaListDataType[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
             const dataCountByMonthSorted: MediaData[] = await getImageCountByMonthYear();
 
-            const transformedData: MonthListDataType[] = dataCountByMonthSorted.map((item, index) => ({
+            const transformedData: MediaListDataType[] = dataCountByMonthSorted.map((item, index) => ({
                 name: `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`,
                 type: "Month",
                 inProgress: Math.random() < 0.5, // Random boolean
@@ -28,7 +28,7 @@ const MonthList = () => {
         fetchData();
     }, []); // Removed monthListData from dependency array
 
-    const renderItem = ({ item }: { item: MonthListDataType }) => {
+    const renderItem = ({ item }: { item: MediaListDataType }) => {
         const isInProgress = item.inProgress;
     
         return (
@@ -38,7 +38,7 @@ const MonthList = () => {
                 }`}
             >
                 {/* Thumbnail Image */}
-                <Image src={item.thumbnail} className="w-14 h-14 rounded-lg mr-4" />
+                <Image source={ item.thumbnail } className="w-14 h-14 rounded-lg mr-4" />
     
                 {/* Text Info */}
                 <View className="flex-1">

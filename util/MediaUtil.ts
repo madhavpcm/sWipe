@@ -1,6 +1,22 @@
 import * as MediaLibrary from 'expo-media-library';
 import {getZeroIndexOfMonth} from './DateUtil';
 import { MediaData } from '@/common/types/SwipeMediaTypes';
+
+export async function getMediaByAlbum(albumName: string) {
+  const album = await MediaLibrary.getAlbumAsync(albumName);
+  console.debug("album returned :", album);
+
+  const media = await MediaLibrary.getAssetsAsync({
+    mediaType: ['photo', 'video'],
+    sortBy: ['creationTime'],
+    album: album,
+    first: 10000 // Adjust as needed
+  });
+
+  console.debug("album media returned :", media);
+  return media
+}
+
 export async function getMediaByMonth(monthString: string) {
   const [monthName, year] = monthString.split(' ');
   // create object of month index manually

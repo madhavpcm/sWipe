@@ -1,10 +1,25 @@
 import { NativeModules } from "react-native";
 import { getMonthNameFromOneBasedIndex } from "./DateUtil";
 import { sortMediaData } from "./MediaUtil";
-import { MediaData } from "@/common/types/SwipeMediaTypes";
+import { AlbumMediaData, MediaData } from "@/common/types/SwipeMediaTypes";
 
 const { SwipeCustomMediaModule } = NativeModules;
 
+export async function getImageCountByAlbumName(): Promise<AlbumMediaData[]> {
+  try {
+    const data = await SwipeCustomMediaModule.countImagesByAlbum();
+    const albumMediaData: AlbumMediaData[] = Object.entries(data).map(([key, value]) => {
+      return {
+        album: key,
+        count: Number(value)
+      }
+    })
+    return albumMediaData
+  } catch (error) {
+    console.error("Failed to get image count", error);
+  }
+  return []
+}
 
 export async function getImageCountByMonthYear(): Promise<MediaData[]>{
   try {
