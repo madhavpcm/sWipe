@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Image,
@@ -7,7 +7,6 @@ import {
     Alert,
     ActivityIndicator
 } from 'react-native';
-import { Video } from 'expo-av';
 import {
     useAnimatedStyle,
     useSharedValue,
@@ -18,19 +17,17 @@ import CardItem from './CardItem'
 import {styles} from './Styles'
 import {deleteMedia} from '@/util/SwipeAndroidLibary'
 import Trie from '@/util/Trie';
-import { loadFromAsycStorage, loadTrieFromAsycStorage, saveToAsyncStorage, saveTrieToAsycStorage } from '@/util/AsyncStorageUtil';
+import { loadTrieFromAsycStorage, saveToAsyncStorage, saveTrieToAsycStorage } from '@/util/AsyncStorageUtil';
 import { TrieEntryType } from '@/common/types/TrieTypes';
-import { SwipeComponentInputType, CurrentAssetType, ActionHistoryType } from '@/common/types/SwipeMediaTypes';
+import { SwipeComponentInputType, CurrentAssetType, ActionHistoryType, SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
+import { getAssetsSize } from '@/util/ExpoFileUtil';
 
-export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputType) {
+export function SwipeScreenComponent({mediaAssets, month, screenKeyType}:SwipeComponentInputType) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    const [permission, setPermission] = useState<string | null>('granted');
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [permission, setPermission] = useState<string | null>('granted'); // TODO: remove this if not used
     const [toDeleteUri, setToDeleteUri] = useState<Array<string>>([]);
-    const [toKeepUri, setToKeepUri] = useState<Array<string>>([]);
     const [currentAsset, setCurrentAsset] = useState<CurrentAssetType>({index: 0, assetUri: ''});
     const [actionHistory, setActionHistory] = useState<Array<ActionHistoryType>>([])
-    const videoRef = useRef<Video | null>(null);
     const [actionTrie, setActionTrie] = useState<Trie | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -39,16 +36,16 @@ export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputTyp
         const refreshActionTree = async () => {
             try {
                 setIsLoading(true);
-                await loadFromLocalStorage(month);
+                await loadFromLocalStorage(month, screenKeyType);
                 setIsLoading(false);
             } catch (e) {
                 console.error("error creating action trie", e);
             }
         };
-        if (mediaAssets.length > 0) {
+        if (mediaAssets.length > 0 && screenKeyType) {
             refreshActionTree();
         }
-    },[month, mediaAssets]); // Corrected dependency array
+    },[month, mediaAssets, screenKeyType]); // Corrected dependency array
     useFocusEffect(useCallback(() => {
         console.debug("use focus effect mounting:" , month)      
   
@@ -61,28 +58,35 @@ export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputTyp
     }, [actionTrie]))
 
 
-    const loadFromLocalStorage = async (key: string): Promise<void> => {
+    const loadFromLocalStorage = async (key: string, type: string): Promise<void> => {
         
         const trieName = key+"-action-trie"
         try{
         let loadedActionTrie = await loadTrieFromAsycStorage(trieName)
         if(!loadedActionTrie){
             console.debug("No action trie found in local storage: ", trieName)
-            loadedActionTrie = new Trie(trieName)
+            // if type is in enum return true else return false
+            const validateType = type === SwipeScreenKeyType.MONTH.toString() || type === SwipeScreenKeyType.ALBUM.toString()
+            if(!validateType){
+                const errMessage = `No screenKeyType found: ${type},  it should belong to ${SwipeScreenKeyType.MONTH} or ${SwipeScreenKeyType.ALBUM}`
+                console.error(errMessage)
+                throw new Error(errMessage)
+            }
+            loadedActionTrie = new Trie(trieName, type)
         }
         const localActionHistory = loadedActionTrie.getActionHistory()
         console.debug("local action history size: ", localActionHistory.length)
         console.debug("entered load from local storage, media assets size: ", mediaAssets.length)
         // make local to keep and to delete uri
         const localToDeleteUri = new Array<string>()
-        const localToKeepUri = new Array<string>()
         let localCurrentIndex = loadedActionTrie.getCurrentIndex()
+        if(mediaAssets.length != loadedActionTrie.getTotalCount()){
+            loadedActionTrie.setTotalCount(mediaAssets.length)
+        }
         mediaAssets.forEach((asset, index) => {
             const assetUri = asset.uri;
             const action = loadedActionTrie.search(assetUri);
-            if (action === TrieEntryType.TO_KEEP) {
-                localToKeepUri.push(assetUri);
-            } else if (action === TrieEntryType.TO_DELETE) {
+            if (action === TrieEntryType.TO_DELETE) {
                 localToDeleteUri.push(assetUri);
             } else if (action !== TrieEntryType.TO_SKIP && localCurrentIndex<0) {
                 localCurrentIndex = index
@@ -95,7 +99,6 @@ export function SwipeScreenComponent({mediaAssets, month}:SwipeComponentInputTyp
         setCurrentAsset({index: localCurrentIndex ,assetUri: localAssetUri});
         setCurrentIndex(localCurrentIndex)
         setToDeleteUri(localToDeleteUri)
-        setToKeepUri(localToKeepUri)
         setActionHistory(localActionHistory)
         console.debug("local current index: ", localCurrentIndex)
         setActionTrie(loadedActionTrie)    
@@ -132,9 +135,12 @@ const deleteAssets = async (deleteUris: string[]) => {
         if(result){
             Alert.alert('Deleted', 'Selected media files have been deleted');
             // clear to delete from trie
-            toDeleteUri.forEach((uri) => {
-                actionTrie.delete(uri);
-            })
+            // toDeleteUri.forEach((uri) => {
+            //     actionTrie.delete(uri);
+            // }) TODO: remove this
+            const deletedMediaSize = await getAssetsSize(toDeleteUri)
+            actionTrie.incrementDeletedMediaSize(deletedMediaSize);
+            actionTrie.incrementDeletedCount(toDeleteUri.length);
             // save trie
             await saveToAsyncStorage<Trie>(month+"-action-trie", actionTrie)
             setToDeleteUri([])           
@@ -186,9 +192,9 @@ const deleteAssets = async (deleteUris: string[]) => {
             actionTrie.insert(uri, TrieEntryType.TO_DELETE);
         }
         if (action === 'keep') {
-            setToKeepUri((prev) => [...prev, uri]);
             // add to keep trie
             actionTrie.insert(uri, TrieEntryType.TO_KEEP);
+            actionTrie.incrementKeptCount(1);
         }
 
         if (action === 'skip') {
@@ -231,10 +237,7 @@ const deleteAssets = async (deleteUris: string[]) => {
             }
             // If it was a keep action, remove from keep list
             if(lastAction.action === 'keep') {
-                setToKeepUri((prev) =>
-                    // all except the last one, spread
-                    prev.filter((uri) => uri !== lastAction.assetUri)
-                );
+                actionTrie.incrementKeptCount(-1);
             }
             // remove from trie
             actionTrie.delete(lastAction.assetUri);
@@ -319,7 +322,7 @@ const deleteAssets = async (deleteUris: string[]) => {
     }
 
 
-    if (!permission) {
+    if (!permission) { // TODO: remove this if block if not used
         return (
             <View style={styles.container}>
                 <Text style={styles.message}>

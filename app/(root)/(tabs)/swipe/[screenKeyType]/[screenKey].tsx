@@ -43,7 +43,7 @@ export default function SwipeScreen() {
   return (
 
     <View className="flex-1 bg-white p-4">
-      <SwipeScreenComponent mediaAssets={mediaAssets} month={screenKey}/>
+      <SwipeScreenComponent mediaAssets={mediaAssets} month={screenKey} screenKeyType={screenKeyType}/>
     </View>
   );
 }
