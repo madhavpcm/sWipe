@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { getMonthNameFromOneBasedIndex } from '@/util/DateUtil';
 import { getImageCountByMonthYear } from '@/util/SwipeAndroidLibary';
 import images from '@/constants/images';
-import { MediaData } from '@/common/types/SwipeMediaTypes';
+import { MediaData, MediaListDataType } from '@/common/types/SwipeMediaTypes';
+import { getAllActionTrieKeys, loadTrieFromAsycStorage } from '@/util/AsyncStorageUtil';
 
 type MonthListDataType = {
     name: string;
@@ -16,30 +17,45 @@ type MonthListDataType = {
 };
 
 const MonthList = () => {
-    const [monthListData, setMonthListData] = useState<MonthListDataType[]>([]);
+    const [monthListData, setMonthListData] = useState<MediaListDataType[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
-            const dataCountByMonthSorted: MediaData[] = await getImageCountByMonthYear();
-
-            const transformedData: MonthListDataType[] = dataCountByMonthSorted.map((item, index) => ({
-                name: `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`,
-                type: "Month",
-                inProgress: Math.random() < 0.5, // Random boolean
-                dateObj: new Date(), // for sorting
-                itemCount: item.count, // assuming count exists in MediaData
-                totalSize: item.count, // assuming count represents size
-                thumbnail: images.newYork as ImageSourcePropType,
+            // from async storage get all keys
+            const actionTrieKeys = await getAllActionTrieKeys();
+            console.debug("actionTrieKeys:", actionTrieKeys);
+            const data: MediaListDataType[] = await Promise.all(actionTrieKeys.map(async (key) => {
+                // load action trie for key
+                const actionTrie = await loadTrieFromAsycStorage(key);
+                console.debug("actionTrie:", actionTrie);
+                if (!actionTrie) {
+                    console.error("No action trie found for key:", key);
+                    throw Error(`No action trie found for key: ${key}`);
+                }
+                // remove -action-trie from name
+                const name = actionTrie.name.replace('-action-trie', '');
+                // convert bytes to mb
+                const totalSize = actionTrie.getDeletedMediaSize() / (1024 * 1024);
+                return {
+                    name,
+                    type: "Month",
+                    progress: actionTrie.getProgress(),
+                    dateObj: new Date(actionTrie.getLastAccessed()), // for sorting
+                    itemCount: actionTrie.getDeletedCount(), // assuming count exists in MediaData
+                    totalSize,
+                    thumbnail: images.newYork,
+                }
             }));
 
-            setMonthListData(transformedData);
+            setMonthListData(data);
         };
 
         fetchData();
+        console.debug("time line use effect called")
     }, []); // Removed monthListData from dependency array
 
-    const renderItem = ({ item }: { item: MonthListDataType }) => {
-        const isInProgress = item.inProgress;
+    const renderItem = ({ item }: { item: MediaListDataType }) => {
+        const isInProgress = item.progress <1;
     
         return (
             <View
@@ -56,10 +72,10 @@ const MonthList = () => {
                         {item.name}
                     </Text>
                     <Text className={`text-sm ${isInProgress ? 'text-blue-200' : 'text-blue-400'}`}>
-                        {item.itemCount} items
+                        {item.itemCount} items cleaned
                     </Text>
                     <Text className={`text-xs ${isInProgress ? 'text-blue-100' : 'text-blue-600'}`}>
-                        {item.totalSize} MB
+                        {item.totalSize.toFixed(2)} MB freed
                     </Text>
                 </View>
     

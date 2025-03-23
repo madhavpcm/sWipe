@@ -1,12 +1,15 @@
-import { View, Text } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
+import { Title } from '@/components/common/title'
+import AlbumList from '@/components/album-list'
+import { MaterialIcons } from '@expo/vector-icons'
 
 const index = () => {
   return (
     <View
-    className='flex-1 bg-white'
-    >
-      <Text>album</Text>
+    className='flex-1 bg-white px-3'
+    >   
+     <AlbumList />
     </View>
   )
 }

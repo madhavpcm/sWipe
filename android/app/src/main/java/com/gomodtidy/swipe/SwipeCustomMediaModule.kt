@@ -21,6 +21,39 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
+    fun countImagesByAlbum(promise: Promise) {
+        try {
+            val contentResolver = reactApplicationContext.contentResolver
+            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val albumColumn = MediaStore.Images.Media.BUCKET_DISPLAY_NAME
+            val projection = arrayOf(albumColumn)
+
+            val selection = "$albumColumn IS NOT NULL"
+            val sortOrder = "$albumColumn ASC"
+
+            val results = mutableMapOf<String, Int>()
+
+            val cursor = contentResolver.query(uri, projection, selection, null, sortOrder)
+            val albumIndex = cursor?.getColumnIndex(albumColumn) ?: 0
+
+            cursor?.use {
+                if (!it.moveToFirst()) {
+                    return
+                }
+                do {
+                    val albumName = it.getString(albumIndex) ?: "Unknown"
+                    results[albumName] = results.getOrDefault(albumName, 0) + 1
+                } while (it.moveToNext())
+            }
+
+            promise.resolve(Arguments.makeNativeMap(results.toMap()))
+
+        } catch (e: Exception) {
+            promise.reject("ERROR_COUNTING_ALBUMS", "Failed to count images by album", e)
+        }
+    }
+
+    @ReactMethod
     fun countImagesByMonthYear(promise: Promise) {
         try {
             val contentResolver = reactApplicationContext.contentResolver

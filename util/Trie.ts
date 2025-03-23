@@ -1,6 +1,6 @@
 import { TrieEntryType } from "@/common/types/TrieTypes";
-import { saveToAsyncStorage, saveTrieToAsycStorage } from "./AsyncStorageUtil";
-import { ActionHistoryType, SwipeSerializable } from "@/common/types/SwipeMediaTypes";
+import { saveTrieToAsycStorage } from "./AsyncStorageUtil";
+import { ActionHistoryType } from "@/common/types/SwipeMediaTypes";
 
 class TrieNode {
     children: Record<string, TrieNode>;
@@ -17,16 +17,28 @@ class TrieNode {
   class Trie {
     root: TrieNode;
     count: number;
+    type: string;
+    totalCount: number; // Total count of items in bucket (kept, skipped and not seen yet)
+    deletedCount: number;
+    keptCount: number;
+    deletedMediaSize: number;
     name: string;
     currentIndex: number;
     actionHistory: ActionHistoryType[];
+    lastAccessed: number;
 
-    constructor(name: string) {
+    constructor(name: string, type: string) {
       this.root = new TrieNode();
       this.count = 0;
+      this.type = type;
+      this.totalCount = 0;
+      this.deletedCount = 0;
+      this.keptCount = 0;
+      this.deletedMediaSize = 0;
       this.name = name;
       this.currentIndex = -1;
       this.actionHistory = [];
+      this.lastAccessed = Date.now();
       console.debug("Created trie:", name);
     }
 
@@ -85,6 +97,14 @@ class TrieNode {
       this.actionHistory = history;
     }
 
+    getLastAccessed(){
+      return this.lastAccessed;
+    }
+
+    setLastAccessed(lastAccessed: number){
+      this.lastAccessed = lastAccessed;
+    }
+
     getCurrentIndex(){
       return this.currentIndex;
     }
@@ -95,6 +115,38 @@ class TrieNode {
 
     setCurrentIndex(index: number){
       this.currentIndex = index;
+    }
+
+    getDeletedCount(){
+      return this.deletedCount;
+    }
+
+    getDeletedMediaSize(){
+      return this.deletedMediaSize;
+    }
+
+    getTotalCount(){
+      return this.totalCount;
+    }
+
+    getProgress(){
+      return this.getCurrentIndex() / this.getTotalCount()
+    }
+
+    setTotalCount(totalCount: number){
+      this.totalCount = totalCount;
+    }
+
+    incrementDeletedMediaSize(sessionDeletedMediaSize: number){
+      this.deletedMediaSize += sessionDeletedMediaSize;
+    }
+
+    incrementDeletedCount(sessionDeleteCount: number){
+      this.deletedCount += sessionDeleteCount;
+    }
+
+    incrementKeptCount(sessionKeptCount: number = 1){
+      this.keptCount += sessionKeptCount;
     }
   
     toSerializedString(): string {
@@ -109,17 +161,23 @@ class TrieNode {
     static fromSerializedString(serializedObjString: string) {
       // load all data from the serialized string
       try{
-      const {root, count, name, currentIndex, actionHistory} = JSON.parse(serializedObjString);
-        const test = JSON.parse(serializedObjString);
-      // console debug every step
-      console.debug("Loaded trie from storage:", test);
-      const trie = new Trie(name);
-      trie.root = root;
-      trie.count = count;
-      trie.name = name;
-      trie.currentIndex = currentIndex;
-      trie.actionHistory = actionHistory;
-      return trie;
+        const {root, count, type, totalCount, deletedCount, keptCount, deletedMediaSize,
+          lastAccessed, name, currentIndex, actionHistory
+          } = JSON.parse(serializedObjString);
+        // console debug every step
+        console.debug("Loaded trie from storage:", JSON.parse(serializedObjString));
+        const trie = new Trie(name, type);
+        trie.root = root;
+        trie.count = count;
+        trie.totalCount = totalCount;
+        trie.deletedCount = deletedCount;
+        trie.keptCount = keptCount;
+        trie.deletedMediaSize = deletedMediaSize;
+        trie.lastAccessed = lastAccessed;
+        trie.name = name;
+        trie.currentIndex = currentIndex;
+        trie.actionHistory = actionHistory;
+        return trie;
       } catch (error) {
         console.error("Failed to load trie from storage:", error);
         throw error;
