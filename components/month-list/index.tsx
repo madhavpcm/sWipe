@@ -1,4 +1,4 @@
-import { View, Text, FlatList,Image } from 'react-native';
+import { View, Text, FlatList, Image, ImageSourcePropType } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { getMonthNameFromOneBasedIndex } from '@/util/DateUtil';
 import { getImageCountByMonthYear } from '@/util/SwipeAndroidLibary';
@@ -6,35 +6,31 @@ import images from '@/constants/images';
 import { MediaData, MediaListDataType } from '@/common/types/SwipeMediaTypes';
 import { getAllActionTrieKeys, loadTrieFromAsycStorage } from '@/util/AsyncStorageUtil';
 
+type MonthListDataType = {
+    name: string;
+    type: string;
+    inProgress: boolean;
+    dateObj: Date;
+    itemCount: number;
+    totalSize: number;
+    thumbnail: ImageSourcePropType;
+};
+
 const MonthList = () => {
     const [monthListData, setMonthListData] = useState<MediaListDataType[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
-            // from async storage get all keys
-            const actionTrieKeys = await getAllActionTrieKeys();
-            console.debug("actionTrieKeys:", actionTrieKeys);
-            const data: MediaListDataType[] = await Promise.all(actionTrieKeys.map(async (key) => {
-                // load action trie for key
-                const actionTrie = await loadTrieFromAsycStorage(key);
-                console.debug("actionTrie:", actionTrie);
-                if (!actionTrie) {
-                    console.error("No action trie found for key:", key);
-                    throw Error(`No action trie found for key: ${key}`);
-                }
-                // remove -action-trie from name
-                const name = actionTrie.name.replace('-action-trie', '');
-                // convert bytes to mb
-                const totalSize = actionTrie.getDeletedMediaSize() / (1024 * 1024);
-                return {
-                    name,
-                    type: "Month",
-                    progress: actionTrie.getProgress(),
-                    dateObj: new Date(actionTrie.getLastAccessed()), // for sorting
-                    itemCount: actionTrie.getDeletedCount(), // assuming count exists in MediaData
-                    totalSize,
-                    thumbnail: images.newYork,
-                }
+            const dataCountByMonthSorted: MediaData[] = await getImageCountByMonthYear();
+
+            const transformedData: MonthListDataType[] = dataCountByMonthSorted.map((item, index) => ({
+                name: `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`,
+                type: "Month",
+                inProgress: Math.random() < 0.5, // Random boolean
+                dateObj: new Date(), // for sorting
+                itemCount: item.count, // assuming count exists in MediaData
+                totalSize: item.count, // assuming count represents size
+                thumbnail: images.newYork as ImageSourcePropType,
             }));
 
             setMonthListData(data);
@@ -85,9 +81,10 @@ const MonthList = () => {
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
                 contentContainerStyle={{ paddingBottom: 20 }}
-                ListEmptyComponent={<Text className="text-center text-gray-400">No data available</Text>}
+                ListEmptyComponent={<Text className="text-center text-gray-400 mt-6 ">Nothing here, Click a pic or two!</Text>}
             />
         </View>
+        
     );
 };
 
