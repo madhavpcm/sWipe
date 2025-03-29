@@ -89,7 +89,7 @@ const AlbumList = () => {
                 // pass two dynamic rountes /swipe/:type/:monthYear
                 // router push screen
                 console.debug("navigating to swipe screen with params:", item);
-                router.push(`/swipe/${SwipeScreenKeyType.ALBUM}/${item.name}`);
+                router.push(`/(root)/${SwipeScreenKeyType.ALBUM}/${item.name}`);
             
             }}>
             <View className="flex-row justify-between p-3 border-b border-gray-200">

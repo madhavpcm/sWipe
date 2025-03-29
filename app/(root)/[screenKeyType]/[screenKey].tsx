@@ -7,6 +7,7 @@ import React from 'react';
 import { getMediaByAlbum, getMediaByMonth } from '@/util/MediaUtil';
 import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 import { SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
+import SwiperDeck from '@/components/swipe/swiper-deck';
 
 export default function SwipeScreen() {
   const { screenKey, screenKeyType } = useLocalSearchParams<{ screenKey: string, screenKeyType: string }>();
@@ -42,8 +43,12 @@ export default function SwipeScreen() {
 
   return (
 
-    <View className="flex-1 bg-white p-4">
-      <SwipeScreenComponent mediaAssets={mediaAssets} month={screenKey} screenKeyType={screenKeyType}/>
+    <View className="flex-1 bg-white">
+      {/* <SwipeScreenComponent mediaAssets={mediaAssets} month={screenKey} screenKeyType={screenKeyType}/> */}
+      <SwiperDeck
+      items={mediaAssets}
+      />
+      
     </View>
   );
 }
