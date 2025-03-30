@@ -160,6 +160,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'net.bytebuddy:byte-buddy:1.17.2' // Ensure compatibility with Mockito version
+    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
+
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";

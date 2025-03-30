@@ -5,9 +5,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import { getImageCountByMonthYear } from "@/util/SwipeAndroidLibary";
 import { getMonthNameFromOneBasedIndex } from "@/util/DateUtil";
-import { useRouter, useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import { MediaData, SwipeScreenKeyType } from "@/common/types/SwipeMediaTypes";
-import { CommonActions } from "@react-navigation/native";
 
 
 
@@ -120,7 +119,7 @@ export const OngoingList = () => {
                     className=" "
                     data={data}
                     renderItem={renderItem}
-                    keyExtractor={(item, index) => index.toString()}
+                    keyExtractor={(_, index) => index.toString()}
                     contentContainerStyle={{ paddingBottom: 175 }}
                 />
             </View>

@@ -1,8 +1,10 @@
 package com.gomodtidy.swipe
 
+import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.ContentUris
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -12,9 +14,19 @@ import com.facebook.react.bridge.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
-        ReactContextBaseJavaModule(reactContext) {
+        ReactContextBaseJavaModule(reactContext), ActivityEventListener {
+    // Class variables to track requests and promises
+    private val pendingPromises = mutableMapOf<String, Promise>()
+    private val requestMap = mutableMapOf<Int, String>()
+    private val DELETE_REQUEST_CODE = 1001
+
+    init {
+        // Register as an activity event listener
+        reactContext.addActivityEventListener(this)
+    }
 
     override fun getName(): String {
         return "SwipeCustomMediaModule"
@@ -107,6 +119,12 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
         val context = reactApplicationContext
         val urisToDelete = mutableListOf<Uri>()
 
+        // Generate a unique request ID for this deletion operation
+        val requestId = UUID.randomUUID().toString()
+
+        // Store the promise for this specific request
+        pendingPromises[requestId] = promise
+
         for (i in 0 until photos.size()) {
             val filePath = photos.getString(i)
             if (filePath.startsWith("file://")) {
@@ -121,6 +139,7 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
 
         if (urisToDelete.isEmpty()) {
             promise.reject("ERROR", "No valid media URIs found for deletion")
+            pendingPromises.remove(requestId)
             return
         }
 
@@ -131,16 +150,44 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
 
             val activity = currentActivity
             if (activity != null) {
-                activity.startIntentSenderForResult(intentSender, 1001, null, 0, 0, 0)
-                promise.resolve("Delete request sent")
+                // Store the requestId in a map keyed by activityResult requestCode
+                requestMap[DELETE_REQUEST_CODE] = requestId
+
+                activity.startIntentSenderForResult(intentSender, DELETE_REQUEST_CODE, null, 0, 0, 0)
+                // Don't resolve the promise yet - it will be resolved in onActivityResult
             } else {
                 promise.reject("ERROR", "Activity is null")
+                pendingPromises.remove(requestId)
             }
         } catch (e: RecoverableSecurityException) {
             promise.reject("SECURITY_EXCEPTION", e.localizedMessage)
+            pendingPromises.remove(requestId)
         } catch (e: Exception) {
             promise.reject("ERROR", e.localizedMessage)
+            pendingPromises.remove(requestId)
         }
+    }
+
+    override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == DELETE_REQUEST_CODE) {
+            val requestId = requestMap[requestCode]
+            if (requestId != null) {
+                val promise = pendingPromises[requestId]
+                if (promise != null) {
+                    if (resultCode == Activity.RESULT_OK) {
+                        promise.resolve("Photos deleted successfully")
+                    } else {
+                        promise.reject("USER_CANCELLED", "User cancelled the deletion")
+                    }
+                    pendingPromises.remove(requestId)
+                }
+                requestMap.remove(requestCode)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        // Not needed for this functionality
     }
 
     private fun getContentUriFromFilePath(context: Context, filePath: String): Uri? {
