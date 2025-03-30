@@ -1,7 +1,7 @@
 import { SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
-import LocalStorage from './LocalStorage';
-import LocalStorageMetadata from './LocalStorageMetadata';
-import ExternalActionStack from './ExternalActionStack';
+import LocalStorage from './lib/LocalStorage';
+import LocalStorageMetadata from './lib/LocalStorageMetadata';
+import ExternalActionStack from './lib/ExternalActionStack';
 
 class LocalStorageStore {
     static localStorageMap: Map<string, LocalStorage> = new Map();

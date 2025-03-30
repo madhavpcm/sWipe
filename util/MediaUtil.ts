@@ -1,7 +1,7 @@
 import * as MediaLibrary from 'expo-media-library';
 import { getZeroIndexOfMonth } from './DateUtil';
 import { MediaData, SwipeActionType } from '@/common/types/SwipeMediaTypes';
-import { TrieEntryType } from '@/common/types/TrieTypes';
+import { TrieEntryType } from '@/common/lib/localstorage/types/TrieTypes';
 
 export async function getMediaByAlbum(albumName: string) {
     const album = await MediaLibrary.getAlbumAsync(albumName);

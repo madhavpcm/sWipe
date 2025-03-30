@@ -1,7 +1,7 @@
 import {
     AssetType,
     ExternalActionStackEntry,
-} from '@/common/types/LocalStorageTypes';
+} from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { SwipeActionType } from '@/common/types/SwipeMediaTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

@@ -1,5 +1,5 @@
 import { NativeModules } from 'react-native';
-import { sortMediaData } from './MediaUtil';
+import { sortMediaData } from '../../../util/MediaUtil';
 import { AlbumMediaData, MediaData } from '@/common/types/SwipeMediaTypes';
 
 const { SwipeCustomMediaModule } = NativeModules;

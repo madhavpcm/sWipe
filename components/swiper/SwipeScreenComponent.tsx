@@ -12,18 +12,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import CardItem from './CardItem';
 import { styles } from './Styles';
-import { deleteMedia } from '@/util/SwipeAndroidLibary';
-import { TrieEntryType } from '@/common/types/TrieTypes';
+import { deleteMedia } from '@/common/lib/swipeandroid/SwipeAndroidLibary';
+import { TrieEntryType } from '@/common/lib/localstorage/types/TrieTypes';
 import {
     SwipeComponentInputType,
     SwipeScreenKeyType,
     SwipeActionType,
 } from '@/common/types/SwipeMediaTypes';
 import { getAssetsSize } from '@/util/ExpoFileUtil';
-import LocalStorage from '@/util/LocalStorage';
+import LocalStorage from '@/common/lib/localstorage/lib/LocalStorage';
 import { capitalizeFirstLetter } from '@/util/StringUtil';
-import { AssetType } from '@/common/types/LocalStorageTypes';
-import LocalStorageStore from '@/util/LocalStorageStore';
+import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
+import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 
 export function SwipeScreenComponent({
     mediaAssets,

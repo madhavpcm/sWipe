@@ -3,7 +3,7 @@ import { Title } from '../common/title';
 import React, { useEffect, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
-import { getImageCountByAlbumName } from '@/util/SwipeAndroidLibary';
+import { getImageCountByAlbumName } from '@/common/lib/swipeandroid/SwipeAndroidLibary';
 import { useRouter } from 'expo-router';
 import {
     AlbumMediaData,

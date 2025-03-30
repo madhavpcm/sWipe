@@ -104,7 +104,7 @@ export default function Index() {
                 setisGranted(true);
             } else {
                 setisGranted(false);
-                console.log('Permission denied 1: ', status);
+                console.log('Permission denied : ', status);
             }
         };
         checkPermissions();

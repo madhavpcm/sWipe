@@ -5,7 +5,7 @@ import React from 'react';
 import { getMediaByAlbum, getMediaByMonth } from '@/util/MediaUtil';
 import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 import { SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
-import { AssetType } from '@/common/types/LocalStorageTypes';
+import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { getAssetSize } from '@/util/ExpoFileUtil';
 
 export default function SwipeScreen() {

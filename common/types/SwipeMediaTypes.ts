@@ -1,5 +1,5 @@
 import { Asset } from 'expo-media-library';
-import { AssetType } from './LocalStorageTypes';
+import { AssetType } from '../lib/localstorage/types/LocalStorageTypes';
 
 export interface AlbumMediaData {
     album: string;

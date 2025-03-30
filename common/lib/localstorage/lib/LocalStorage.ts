@@ -1,4 +1,4 @@
-import { TrieEntryType } from '@/common/types/TrieTypes';
+import { TrieEntryType } from '@/common/lib/localstorage/types/TrieTypes';
 import {
     ActionHistoryType,
     SwipeActionType,
@@ -6,16 +6,16 @@ import {
 } from '@/common/types/SwipeMediaTypes';
 import LocalStorageMetadata from './LocalStorageMetadata';
 import Trie from './Trie';
-import { fromSwipeActionTypeToTreeAction } from './MediaUtil';
+import { fromSwipeActionTypeToTreeAction } from '../../../../util/MediaUtil';
 import ExternalActionStack from './ExternalActionStack';
 import ActionHistoryStack from './ActionHistoryStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     AssetType,
     ExternalActionStackEntry,
-} from '@/common/types/LocalStorageTypes';
+} from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { Album, getAlbumAsync, getAlbumsAsync } from 'expo-media-library';
-import LocalStorageStore from './LocalStorageStore';
+import LocalStorageStore from '../LocalStorageStore';
 
 class LocalStorage {
     metadata: LocalStorageMetadata;

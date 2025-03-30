@@ -1,4 +1,7 @@
-import { ActionHistoryType, SwipeActionType } from './SwipeMediaTypes';
+import {
+    ActionHistoryType,
+    SwipeActionType,
+} from '../../../types/SwipeMediaTypes';
 
 export interface LocalStorageMediaDataType {
     name: string;

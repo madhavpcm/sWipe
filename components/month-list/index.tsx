@@ -5,8 +5,8 @@ import {
     MediaListDataType,
     SwipeScreenKeyType,
 } from '@/common/types/SwipeMediaTypes';
-import LocalStorage from '@/util/LocalStorage';
-import LocalStorageStore from '@/util/LocalStorageStore';
+import LocalStorage from '@/common/lib/localstorage/lib/LocalStorage';
+import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 import { useFocusEffect } from 'expo-router';
 
 const MonthList = () => {

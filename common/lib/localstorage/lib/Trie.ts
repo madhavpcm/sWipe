@@ -1,4 +1,4 @@
-import { TrieEntryType } from '@/common/types/TrieTypes';
+import { TrieEntryType } from '@/common/lib/localstorage/types/TrieTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class TrieNode {
