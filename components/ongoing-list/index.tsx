@@ -94,7 +94,7 @@ export const OngoingList = () => {
         <TouchableNativeFeedback
             onPress={() => {
                 //  router.navigate({ pathname: `/swipe/${item.name}`,params:{ monthYear: item.name } });
-                router.push(`/swipe/${SwipeScreenKeyType.MONTH}/${item.name}`);
+                router.push(`/(root)/${SwipeScreenKeyType.MONTH}/${item.name}`);
             }}
         >
             <View className="flex-row justify-between p-3 border-b border-gray-200">

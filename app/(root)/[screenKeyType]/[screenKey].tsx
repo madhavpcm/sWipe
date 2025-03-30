@@ -3,8 +3,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import React from 'react';
 import { getMediaByAlbum, getMediaByMonth } from '@/util/MediaUtil';
-import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 import { SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
+import SwiperDeck from '@/components/swipe/swiper-deck';
 import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { getAssetSize } from '@/util/ExpoFileUtil';
 
@@ -58,7 +58,7 @@ export default function SwipeScreen() {
 
     return (
         <View className="flex-1 bg-white p-4">
-            <SwipeScreenComponent
+            <SwiperDeck
                 mediaAssets={mediaAssets}
                 swipeKey={screenKey}
                 screenKeyType={
