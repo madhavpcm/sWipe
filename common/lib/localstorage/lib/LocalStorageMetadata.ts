@@ -119,6 +119,10 @@ class LocalStorageMetadata {
         if (metadata) {
             return metadata;
         }
+        return this.createMetadata(name, type);
+    }
+
+    static async createMetadata(name: string, type: SwipeScreenKeyType) {
         return new LocalStorageMetadata(name + '_metadata', type);
     }
 

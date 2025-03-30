@@ -1,27 +1,47 @@
 import { View, FlatList, Text, TouchableNativeFeedback } from 'react-native';
 import { Title } from '../common/title';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { getImageCountByMonthYear } from '@/common/lib/swipeandroid/SwipeAndroidLibary';
 import { getMonthNameFromOneBasedIndex } from '@/util/DateUtil';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MediaData, SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
+import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
+import { convertDateToRelativeTimeString } from '@/util/DateUtil';
 
 const getOngoingListData = async (): Promise<Array<OngoingListDataType>> => {
     const dataCountByMonthSorted: MediaData[] =
         await getImageCountByMonthYear();
 
     // in the same sorted order transform this to OngoingListDataType
-    const transformedData: OngoingListDataType[] = dataCountByMonthSorted.map(
-        (item) => {
+    const transformedData: OngoingListDataType[] = await Promise.all(
+        dataCountByMonthSorted.map(async (item) => {
+            const itemName = `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`;
+            const doesMetadataExist =
+                await LocalStorageStore.checkIfMetadataExists(
+                    itemName,
+                    SwipeScreenKeyType.MONTH
+                );
+            var progress = 0;
+            var lastAccessed = 0;
+            if (doesMetadataExist) {
+                const metadata = await LocalStorageStore.getMetadataOnly(
+                    itemName,
+                    SwipeScreenKeyType.MONTH
+                );
+                progress = metadata.getProgress();
+                lastAccessed = metadata.getLastAccessed();
+            }
             return {
-                name: `${getMonthNameFromOneBasedIndex(item.month)} ${item.year}`,
+                name: itemName,
                 type: 'Month',
-                progress: 30 / item.count,
-                dateString: '1 month ago',
+                progress,
+                dateString: convertDateToRelativeTimeString(
+                    lastAccessed ? new Date(lastAccessed) : null
+                ),
             };
-        }
+        })
     );
 
     return transformedData;
@@ -34,13 +54,15 @@ export const OngoingList = () => {
     const [data, setData] = useState<Array<OngoingListDataType>>([]);
 
     // use effect fetch data
-    useEffect(() => {
-        const fetchData = async () => {
-            const localData = await getOngoingListData();
-            setData(localData);
-        };
-        fetchData();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            const fetchData = async () => {
+                const localData = await getOngoingListData();
+                setData(localData);
+            };
+            fetchData();
+        }, [])
+    );
 
     const CircularProgress = ({
         progress,

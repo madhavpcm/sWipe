@@ -1,6 +1,7 @@
 import { NativeModules } from 'react-native';
 import { sortMediaData } from '../../../util/MediaUtil';
 import { AlbumMediaData, MediaData } from '@/common/types/SwipeMediaTypes';
+import { MediaSizeByCategory } from './types/SwipeAndroidLibraryTypes';
 
 const { SwipeCustomMediaModule } = NativeModules;
 
@@ -25,7 +26,6 @@ export async function getImageCountByAlbumName(): Promise<AlbumMediaData[]> {
 export async function getImageCountByMonthYear(): Promise<MediaData[]> {
     try {
         // one month ago
-        // const countMap1 = await SwipeCustomMediaModule.deletePhotos(["file://test"]);
         const data = await SwipeCustomMediaModule.countImagesByMonthYear();
 
         // create a list of MediaData
@@ -71,4 +71,15 @@ export async function deleteMedia(deleteUris: string[]) {
             return Promise.resolve(false);
         });
     return result;
+}
+
+export async function getMediaSizeByCategory(): Promise<MediaSizeByCategory> {
+    try {
+        const { images, videos, audio, gifs } =
+            await SwipeCustomMediaModule.getMediaSizeByCategory();
+        return { images, videos, audio, gifs };
+    } catch (error) {
+        console.error('Failed to get media size by category', error);
+    }
+    return { images: 0, videos: 0, audio: 0, gifs: 0 };
 }

@@ -99,7 +99,7 @@ export function SwipeScreenComponent({
             // make local to keep and to delete uri
             const localToDeleteUri = new Array<AssetType>();
             let localCurrentIndex = storage.getCurrentIndex();
-            if (mediaAssets.length != storage.getTotalCount()) {
+            if (storage.getTotalCount() === 0) {
                 storage.setInitialCount(mediaAssets.length);
             }
             mediaAssets.forEach((asset, index) => {
@@ -123,7 +123,14 @@ export function SwipeScreenComponent({
 
             const localAsset = mediaAssets[localCurrentIndex];
             if (!localAsset) {
-                console.error('No asset found in local storage: ', localAsset);
+                console.error(
+                    'No asset found in local storage: ',
+                    localAsset,
+                    'at index: ',
+                    localCurrentIndex,
+                    'total count: ',
+                    mediaAssets.length
+                );
             }
 
             setCurrentAsset({

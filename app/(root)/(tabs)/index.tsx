@@ -107,7 +107,3 @@ export default function Index() {
         </View>
     );
 }
-
-function shouldShowRequestPermissionRationale(permission: any) {
-    throw new Error('Function not implemented.');
-}

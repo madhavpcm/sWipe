@@ -26,6 +26,22 @@ class LocalStorageStore {
         return this.localStorageMap.get(key) as LocalStorage;
     }
 
+    static async checkIfMetadataExists(
+        name: string,
+        type: SwipeScreenKeyType
+    ): Promise<boolean> {
+        const key = name + type;
+        var metadataExists = this.localStorageMap.has(key);
+        if (!metadataExists) {
+            // check local storage for key
+            const metadata = await LocalStorageMetadata.load(name);
+            if (metadata) {
+                metadataExists = true;
+            }
+        }
+        return metadataExists;
+    }
+
     static async getMetadataOnly(
         name: string,
         type: SwipeScreenKeyType

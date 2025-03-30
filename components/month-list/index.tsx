@@ -82,10 +82,10 @@ const MonthList = () => {
                 }`}
             >
                 {/* Thumbnail Image */}
-                <Image
-                    source={item.thumbnail}
+                {/* <Image
+                    // source={item.thumbnail}
                     className="w-14 h-14 rounded-lg mr-4"
-                />
+                /> */}
 
                 {/* Text Info */}
                 <View className="flex-1">

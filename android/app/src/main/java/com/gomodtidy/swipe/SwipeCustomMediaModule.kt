@@ -2,6 +2,7 @@ package com.gomodtidy.swipe
 
 import android.app.Activity
 import android.app.RecoverableSecurityException
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
@@ -189,6 +190,119 @@ class SwipeCustomMediaModule(reactContext: ReactApplicationContext) :
     override fun onNewIntent(intent: Intent?) {
         // Not needed for this functionality
     }
+
+    /**
+     * Calculates the total size of media files grouped by their categories
+     * (images, videos, audio, and documents)
+     *
+     * @param promise Promise to resolve with the media size information
+     */
+    @ReactMethod
+    fun getMediaSizeByCategory(promise: Promise) {
+        try {
+            val contentResolver = reactApplicationContext.contentResolver
+            val results = mutableMapOf<String, Long>() // Map to store category -> total size
+
+            // Initialize size counters for each category
+            results["images"] = 0L
+            results["videos"] = 0L
+            results["audio"] = 0L
+            results["gifs"] = 0L
+//            results["documents"] = 0L
+
+            // 1. Get Images size (including GIFs)
+            processMediaCategoryTotalSize(
+                contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Images.Media.SIZE, MediaStore.Images.Media.MIME_TYPE),
+                results
+            )
+
+            // 2. Get Videos size
+            processMediaCategoryTotalSize(
+                contentResolver,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Video.Media.SIZE, MediaStore.Video.Media.MIME_TYPE),
+                results
+            )
+
+            // 3. Get Audio size
+            processMediaCategoryTotalSize(
+                contentResolver,
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Audio.Media.SIZE, MediaStore.Audio.Media.MIME_TYPE),
+                results
+            )
+
+            // 4. Get Documents size (API 29+)
+            /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                processMediaCategoryTotalSize(
+                    contentResolver,
+                    MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                    arrayOf(MediaStore.Files.FileColumns.SIZE, MediaStore.Files.FileColumns.MIME_TYPE),
+                    results,
+                    "${MediaStore.Files.FileColumns.MEDIA_TYPE}=${MediaStore.Files.FileColumns.MEDIA_TYPE_DOCUMENT}"
+                )
+            }*/
+
+            // Convert to WritableMap for React Native
+            val writableMap = Arguments.createMap()
+            for ((category, size) in results) {
+                writableMap.putDouble(category, size.toDouble())
+            }
+
+            promise.resolve(writableMap)
+        } catch (e: Exception) {
+            promise.reject("ERROR_GETTING_MEDIA_SIZE", "Failed to get media size by category", e)
+        }
+    }
+
+    /**
+     * Helper function to process each media category and calculate sizes
+     */
+    private fun processMediaCategoryTotalSize(
+        contentResolver: ContentResolver,
+        uri: Uri,
+        projection: Array<String>,
+        results: MutableMap<String, Long>,
+        selection: String? = null
+    ) {
+        contentResolver.query(uri, projection, selection, null, null)?.use { cursor ->
+            val sizeIndex = cursor.getColumnIndex(projection[0])
+            val mimeTypeIndex = cursor.getColumnIndex(projection[1])
+
+            if (cursor.moveToFirst()) {
+                do {
+                    val size = cursor.getLong(sizeIndex)
+                    val mimeType = cursor.getString(mimeTypeIndex) ?: ""
+
+                    when {
+                        // Handle GIFs separately
+                        mimeType.contains("image/gif") -> {
+                            results["gifs"] = results.getOrDefault("gifs", 0L) + size
+                        }
+                        // Images
+                        mimeType.startsWith("image/") -> {
+                            results["images"] = results.getOrDefault("images", 0L) + size
+                        }
+                        // Videos
+                        mimeType.startsWith("video/") -> {
+                            results["videos"] = results.getOrDefault("videos", 0L) + size
+                        }
+                        // Audio
+                        mimeType.startsWith("audio/") -> {
+                            results["audio"] = results.getOrDefault("audio", 0L) + size
+                        }
+                        // Documents (for document-specific queries)
+                        uri == MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL) -> {
+                            results["documents"] = results.getOrDefault("documents", 0L) + size
+                        }
+                    }
+                } while (cursor.moveToNext())
+            }
+        }
+    }
+
 
     private fun getContentUriFromFilePath(context: Context, filePath: String): Uri? {
         val projection = arrayOf(MediaStore.Images.Media._ID)

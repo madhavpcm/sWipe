@@ -7,6 +7,7 @@ import { SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
 import SwiperDeck from '@/components/swipe/swiper-deck';
 import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { getAssetSize } from '@/util/ExpoFileUtil';
+import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 
 export default function SwipeScreen() {
     const { screenKey, screenKeyType } = useLocalSearchParams<{
@@ -58,7 +59,7 @@ export default function SwipeScreen() {
 
     return (
         <View className="flex-1 bg-white p-4">
-            <SwiperDeck
+            <SwipeScreenComponent
                 mediaAssets={mediaAssets}
                 swipeKey={screenKey}
                 screenKeyType={
