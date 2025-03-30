@@ -1,33 +1,11 @@
-import { Link, router, useLocalSearchParams } from 'expo-router';
-
-import {
-    Text,
-    View,
-    ScrollView,
-    Image,
-    TouchableOpacity,
-    SafeAreaView,
-    StyleSheet,
-    ToastAndroid,
-    Linking,
-    NativeModules,
-} from 'react-native';
+import { Text, View } from 'react-native';
 import images from '@/constants/images';
-import icons from '@/constants/icons';
-import FlatBoard from 'react-native-flatboard';
-import { useFonts } from 'expo-font';
 import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
-import * as FileSsystem from 'expo-file-system';
-import { format } from 'date-fns';
-import Header from '@/components/common/Header';
-import Button from '@/components/common/button';
 import { PermissionsAndroid, Platform } from 'react-native';
 import React from 'react';
-import { MaterialIcons } from '@expo/vector-icons';
 import { Banner } from '@/components/home/banner';
 import { OngoingList } from '@/components/ongoing-list';
-import { BottomNav } from '@/components/common/bottom-nav';
 
 const requestStoragePermission = async () => {
     let permissions = [
