@@ -10,7 +10,15 @@ import Animated, {
 import { ResizeMode, Video } from 'expo-av';
 import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 
-const SwipeCard = ({ item }: { item: AssetType }) => {
+const SwipeCard = ({
+    item,
+    index,
+    totalCount,
+}: {
+    item: AssetType;
+    index: number;
+    totalCount: number;
+}) => {
     const fadeAnim = useSharedValue(0);
     const [showMetadata, setShowMetadata] = useState(false);
 
@@ -30,19 +38,14 @@ const SwipeCard = ({ item }: { item: AssetType }) => {
         return parts.length > 1 ? parts.pop()?.toUpperCase() : 'Unknown';
     };
 
-    const fileFormat = getFileFormat(
-        //item?.filename ||
-        item?.uri
-    );
+    const fileFormat = getFileFormat(item?.filename || item?.uri);
     const resolutionText = 'Unknown';
-    // item?.width && item?.height
-    //     ? `${item.width} x ${item.height}`
-    //     : 'Unknown';
+    item?.width && item?.height ? `${item.width} x ${item.height}` : 'Unknown';
 
     return (
         <View className="flex-1 flex flex-col p-2">
             <View className="h-2/3 rounded-2xl overflow-hidden relative">
-                {true ? ( //item?.mediaType === 'photo' ? (
+                {item?.mediaType === 'photo' ? (
                     <Image
                         source={{ uri: item?.uri }}
                         className="h-full w-full"
@@ -99,11 +102,7 @@ const SwipeCard = ({ item }: { item: AssetType }) => {
                             : 'Unknown'}
                     </Text>
                     <Text className="text-white text-sm">
-                        Location:{' '}
-                        {
-                            //item?.location ||
-                            'Unknown'
-                        }
+                        Location: {item?.location?.latitude || 'Unknown'}
                     </Text>
                     <Text className="text-white text-sm">
                         Format: {fileFormat}
@@ -141,7 +140,7 @@ const SwipeCard = ({ item }: { item: AssetType }) => {
                             color="white"
                         />
                         <Text className="text-md font-rubik-bold text-white ml-1">
-                            15/100
+                            {index + 1}/{totalCount}
                         </Text>
                     </View>
                     <View className="flex flex-row items-center">

@@ -20,7 +20,17 @@ export interface ActionHistory {
     actionHistory: ActionHistoryType[];
 }
 
+export interface LocationType {
+    longitude: number;
+    latitude: number;
+}
+
 export interface AssetType {
+    location: LocationType | undefined;
+    mediaType: string;
+    width: any;
+    height: any;
+    filename: string;
     index: number;
     uri: string;
     albumId: string | undefined;

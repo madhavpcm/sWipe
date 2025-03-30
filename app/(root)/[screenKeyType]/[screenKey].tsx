@@ -2,12 +2,17 @@ import { View, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import React from 'react';
-import { getMediaByAlbum, getMediaByMonth } from '@/util/MediaUtil';
+import {
+    getLocationFromAsset,
+    getMediaByAlbum,
+    getMediaByMonth,
+} from '@/util/MediaUtil';
 import { SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
 import SwiperDeck from '@/components/swipe/swiper-deck';
 import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { getAssetSize } from '@/util/ExpoFileUtil';
 import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
+import { getAssetInfoAsync } from 'expo-media-library';
 
 export default function SwipeScreen() {
     const { screenKey, screenKeyType } = useLocalSearchParams<{
@@ -43,6 +48,11 @@ export default function SwipeScreen() {
                     albumId: asset.albumId,
                     creationTime: asset.creationTime,
                     assetSize: (await getAssetSize(asset.uri)) || 0,
+                    width: asset.width,
+                    height: asset.height,
+                    filename: asset.filename,
+                    mediaType: asset.mediaType,
+                    location: await getLocationFromAsset(asset),
                 }))
             );
 
@@ -59,7 +69,7 @@ export default function SwipeScreen() {
 
     return (
         <View className="flex-1 bg-white p-4">
-            <SwipeScreenComponent
+            <SwiperDeck
                 mediaAssets={mediaAssets}
                 swipeKey={screenKey}
                 screenKeyType={

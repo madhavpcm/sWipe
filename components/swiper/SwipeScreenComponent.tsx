@@ -39,6 +39,11 @@ export function SwipeScreenComponent({
         albumId: '',
         creationTime: 0,
         assetSize: 0,
+        width: 0,
+        height: 0,
+        filename: '',
+        mediaType: '',
+        location: undefined,
     });
     const [localStorage, setLocalStorage] = useState<LocalStorage | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -112,6 +117,11 @@ export function SwipeScreenComponent({
                         albumId: asset.albumId,
                         creationTime: asset.creationTime,
                         assetSize: asset.assetSize,
+                        width: asset.width,
+                        height: asset.height,
+                        filename: asset.filename,
+                        mediaType: asset.mediaType,
+                        location: asset.location,
                     });
                 } else if (
                     action !== TrieEntryType.TO_SKIP &&
@@ -139,6 +149,11 @@ export function SwipeScreenComponent({
                 albumId: localAsset?.albumId,
                 creationTime: localAsset?.creationTime,
                 assetSize: localAsset?.assetSize,
+                width: localAsset?.width,
+                height: localAsset?.height,
+                filename: localAsset?.filename,
+                mediaType: localAsset?.mediaType,
+                location: localAsset?.location,
             });
             setCurrentIndex(localCurrentIndex);
             setToDeleteAssets(localToDeleteUri);
@@ -221,6 +236,11 @@ export function SwipeScreenComponent({
             albumId: mediaAsset.albumId,
             creationTime: mediaAsset.creationTime,
             assetSize: mediaAsset.assetSize,
+            width: mediaAsset.width,
+            height: mediaAsset.height,
+            filename: mediaAsset.filename,
+            mediaType: mediaAsset.mediaType,
+            location: mediaAsset.location,
         });
 
         // Handle specific actions
@@ -249,6 +269,11 @@ export function SwipeScreenComponent({
                 albumId: nextAsset.albumId,
                 creationTime: nextAsset.creationTime,
                 assetSize: nextAsset.assetSize,
+                width: nextAsset.width,
+                height: nextAsset.height,
+                filename: nextAsset.filename,
+                mediaType: nextAsset.mediaType,
+                location: nextAsset.location,
             });
             localStorage.setCurrentIndex(currentIndex + 1);
             setCurrentIndex((prev) => prev + 1);
@@ -291,6 +316,11 @@ export function SwipeScreenComponent({
                 albumId: lastAction.albumId,
                 creationTime: lastAction.creationTime,
                 assetSize: lastAction.assetSize,
+                width: lastAction.width,
+                height: lastAction.height,
+                filename: lastAction.filename,
+                mediaType: lastAction.mediaType,
+                location: lastAction.location,
             });
             if (localStorage.getActionHistorySize() === 0) {
                 setEnableUndo(false);

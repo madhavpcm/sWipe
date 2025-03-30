@@ -12,6 +12,7 @@ const requestStoragePermission = async () => {
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        PermissionsAndroid.PERMISSIONS.ACCESS_MEDIA_LOCATION,
         // PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
     ];
 

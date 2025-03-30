@@ -2,8 +2,11 @@ import * as MediaLibrary from 'expo-media-library';
 import { getZeroIndexOfMonth } from './DateUtil';
 import { MediaData, SwipeActionType } from '@/common/types/SwipeMediaTypes';
 import { TrieEntryType } from '@/common/lib/localstorage/types/TrieTypes';
+import { LocationType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 
-export async function getMediaByAlbum(albumName: string) {
+export async function getMediaByAlbum(
+    albumName: string
+): Promise<MediaLibrary.PagedInfo<MediaLibrary.Asset>> {
     const album = await MediaLibrary.getAlbumAsync(albumName);
     console.debug('album returned :', album);
 
@@ -18,7 +21,9 @@ export async function getMediaByAlbum(albumName: string) {
     return media;
 }
 
-export async function getMediaByMonth(monthString: string) {
+export async function getMediaByMonth(
+    monthString: string
+): Promise<MediaLibrary.PagedInfo<MediaLibrary.Asset>> {
     const [monthName, year] = monthString.split(' ');
     // create object of month index manually
     const monthIndex = getZeroIndexOfMonth(monthName); // Get month index (0-based)
@@ -72,4 +77,14 @@ export const fromSwipeActionTypeToTreeAction = (
         default:
             return TrieEntryType.NONE;
     }
+};
+
+export const getLocationFromAsset = async (
+    asset: MediaLibrary.Asset
+): Promise<LocationType | undefined> => {
+    const assetInfo = (await MediaLibrary.getAssetInfoAsync(asset)).location;
+    if (!assetInfo) {
+        return undefined;
+    }
+    return { longitude: assetInfo.longitude, latitude: assetInfo.latitude };
 };
