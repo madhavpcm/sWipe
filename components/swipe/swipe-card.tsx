@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ResizeMode, Video } from 'expo-av';
 import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
+import { bytesToHumanReadable } from '@/util/MediaUtil';
 
 const SwipeCard = React.memo(
     ({
@@ -109,13 +110,11 @@ const SwipeCard = React.memo(
                         <Text className="text-white text-sm">
                             Date:{' '}
                             {item?.creationTime
-                                ? new Date(
-                                      item.creationTime * 1000
-                                  ).toDateString()
+                                ? new Date(item.creationTime).toDateString()
                                 : 'Unknown'}
                         </Text>
                         <Text className="text-white text-sm">
-                            Location: {item?.location?.latitude || 'Unknown'}
+                            Size: {bytesToHumanReadable(item?.assetSize || 0)}
                         </Text>
                         <Text className="text-white text-sm">
                             Format: {fileFormat}

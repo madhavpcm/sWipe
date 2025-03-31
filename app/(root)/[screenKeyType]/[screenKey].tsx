@@ -13,6 +13,7 @@ import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { getAssetSize } from '@/util/ExpoFileUtil';
 import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 import { getAssetInfoAsync } from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library';
 
 export default function SwipeScreen() {
     const { screenKey, screenKeyType } = useLocalSearchParams<{
@@ -42,18 +43,20 @@ export default function SwipeScreen() {
             }
 
             const media: AssetType[] = await Promise.all(
-                expoMedia.assets.map(async (asset, index) => ({
-                    index: index,
-                    uri: asset.uri,
-                    albumId: asset.albumId,
-                    creationTime: asset.creationTime,
-                    assetSize: (await getAssetSize(asset.uri)) || 0,
-                    width: asset.width,
-                    height: asset.height,
-                    filename: asset.filename,
-                    mediaType: asset.mediaType,
-                    location: await getLocationFromAsset(asset),
-                }))
+                expoMedia.assets.map(
+                    async (asset: MediaLibrary.Asset, index) => ({
+                        index: index,
+                        uri: asset.uri,
+                        albumId: asset.albumId,
+                        creationTime: asset.creationTime,
+                        assetSize: (await getAssetSize(asset.uri)) || 0,
+                        width: asset.width,
+                        height: asset.height,
+                        filename: asset.filename,
+                        mediaType: asset.mediaType,
+                        location: await getLocationFromAsset(asset),
+                    })
+                )
             );
 
             console.debug(`Found ${media.length} assets for ${screenKey}`);
