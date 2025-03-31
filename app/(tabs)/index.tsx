@@ -1,9 +1,30 @@
-import { Text, View } from 'react-native';
+import { Link, router, useLocalSearchParams } from 'expo-router';
+
+import {
+    Text,
+    View,
+    ScrollView,
+    Image,
+    TouchableOpacity,
+    SafeAreaView,
+    StyleSheet,
+    ToastAndroid,
+    Linking,
+    NativeModules,
+} from 'react-native';
 import images from '@/constants/images';
+import icons from '@/constants/icons';
+import FlatBoard from 'react-native-flatboard';
+import { useFonts } from 'expo-font';
 import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
+import * as FileSsystem from 'expo-file-system';
+import { format } from 'date-fns';
+import Header from '@/components/common/Header';
+import Button from '@/components/common/button';
 import { PermissionsAndroid, Platform } from 'react-native';
 import React from 'react';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Banner } from '@/components/home/banner';
 import { OngoingList } from '@/components/ongoing-list';
 
@@ -11,9 +32,7 @@ const requestStoragePermission = async () => {
     let permissions = [
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
-        PermissionsAndroid.PERMISSIONS.ACCESS_MEDIA_LOCATION,
-        // PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
+        // PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO
     ];
 
     const platformVersion = Number(Platform.Version);
@@ -29,10 +48,7 @@ const requestStoragePermission = async () => {
             }
             const granted =
                 await PermissionsAndroid.requestMultiple(permissions);
-            // if (manageStorage !== PermissionsAndroid.RESULTS.GRANTED) {
-            // console.log("MANAGE_EXTERNAL_STORAGE permission denied");
-            // Linking.openSettings(); // Open settings manually
-            // }
+
             console.log('Permissions result:', granted);
         } catch (err) {
             console.warn(err);
@@ -83,7 +99,7 @@ export default function Index() {
                 setisGranted(true);
             } else {
                 setisGranted(false);
-                console.log('Permission denied : ', status);
+                console.log('Permission denied');
             }
         };
         checkPermissions();
@@ -98,7 +114,6 @@ export default function Index() {
             </View>
         );
     }
-
     return (
         <View style={{ flex: 1 }} className="">
             <View className="flex-1 bg-white font-rubik">

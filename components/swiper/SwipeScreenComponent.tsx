@@ -5,332 +5,436 @@ import {
     TouchableOpacity,
     Text,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
 } from 'react-native';
-import {
-    useAnimatedStyle,
-    useSharedValue,
-} from 'react-native-reanimated';
+import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import CardItem from './CardItem'
-import {styles} from './Styles'
-import {deleteMedia} from '@/util/SwipeAndroidLibary'
-import Trie from '@/util/Trie';
-import { loadTrieFromAsycStorage, saveToAsyncStorage, saveTrieToAsycStorage } from '@/util/AsyncStorageUtil';
-import { TrieEntryType } from '@/common/types/TrieTypes';
-import { SwipeComponentInputType, CurrentAssetType, ActionHistoryType, SwipeScreenKeyType } from '@/common/types/SwipeMediaTypes';
+import { useFocusEffect } from 'expo-router';
+import CardItem from './CardItem';
+import { styles } from './Styles';
+import { deleteMedia } from '@/common/lib/swipeandroid/SwipeAndroidLibary';
+import { TrieEntryType } from '@/common/lib/localstorage/types/TrieTypes';
+import {
+    SwipeComponentInputType,
+    SwipeScreenKeyType,
+    SwipeActionType,
+} from '@/common/types/SwipeMediaTypes';
 import { getAssetsSize } from '@/util/ExpoFileUtil';
+import LocalStorage from '@/common/lib/localstorage/lib/LocalStorage';
+import { capitalizeFirstLetter } from '@/util/StringUtil';
+import { AssetType } from '@/common/lib/localstorage/types/LocalStorageTypes';
+import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 
-export function SwipeScreenComponent({mediaAssets, month, screenKeyType}:SwipeComponentInputType) {
+export function SwipeScreenComponent({
+    mediaAssets,
+    swipeKey,
+    screenKeyType,
+    reloadAssets,
+}: SwipeComponentInputType) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    const [permission, setPermission] = useState<string | null>('granted'); // TODO: remove this if not used
-    const [toDeleteUri, setToDeleteUri] = useState<Array<string>>([]);
-    const [currentAsset, setCurrentAsset] = useState<CurrentAssetType>({index: 0, assetUri: ''});
-    const [actionHistory, setActionHistory] = useState<Array<ActionHistoryType>>([])
-    const [actionTrie, setActionTrie] = useState<Trie | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const [toDeleteAssets, setToDeleteAssets] = useState<Array<AssetType>>([]);
+    const [currentAsset, setCurrentAsset] = useState<AssetType>({
+        index: 0,
+        uri: '',
+        albumId: '',
+        creationTime: 0,
+        assetSize: 0,
+        width: 0,
+        height: 0,
+        filename: '',
+        mediaType: '',
+        location: undefined,
+    });
+    const [localStorage, setLocalStorage] = useState<LocalStorage | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [enableUndo, setEnableUndo] = useState(false);
 
     useEffect(() => {
-        console.debug("use effect mounting:", month);
-        const refreshActionTree = async () => {
+        console.debug('use effect mounting:', swipeKey);
+        const reloadFromLocalStorageOrCache = async () => {
             try {
-                setIsLoading(true);
-                await loadFromLocalStorage(month, screenKeyType);
-                setIsLoading(false);
+                await loadFromLocalStorage(swipeKey, screenKeyType);
             } catch (e) {
-                console.error("error creating action trie", e);
+                console.error('error creating action trie', e);
             }
         };
         if (mediaAssets.length > 0 && screenKeyType) {
-            refreshActionTree();
+            reloadFromLocalStorageOrCache();
         }
-    },[month, mediaAssets, screenKeyType]); // Corrected dependency array
-    useFocusEffect(useCallback(() => {
-        console.debug("use focus effect mounting:" , month)      
-  
-        return () => {
-            console.debug("use focus effect unmounting: ", actionTrie?.name)
-            if(actionTrie){
-                saveTrieToAsycStorage(actionTrie.name, actionTrie)
-            }
-        }   
-    }, [actionTrie]))
+    }, [swipeKey, mediaAssets, screenKeyType]);
+    useFocusEffect(
+        useCallback(() => {
+            console.debug('use focus effect mounting:', swipeKey);
 
+            return () => {
+                console.debug(
+                    'use focus effect unmounting: ',
+                    localStorage?.getName()
+                );
+                if (localStorage) {
+                    localStorage.save();
+                }
+            };
+        }, [localStorage])
+    );
 
-    const loadFromLocalStorage = async (key: string, type: string): Promise<void> => {
-        
-        const trieName = key+"-action-trie"
-        try{
-        let loadedActionTrie = await loadTrieFromAsycStorage(trieName)
-        if(!loadedActionTrie){
-            console.debug("No action trie found in local storage: ", trieName)
-            // if type is in enum return true else return false
-            const validateType = type === SwipeScreenKeyType.MONTH.toString() || type === SwipeScreenKeyType.ALBUM.toString()
-            if(!validateType){
-                const errMessage = `No screenKeyType found: ${type},  it should belong to ${SwipeScreenKeyType.MONTH} or ${SwipeScreenKeyType.ALBUM}`
-                console.error(errMessage)
-                throw new Error(errMessage)
+    const loadFromLocalStorage = async (
+        key: string,
+        type: SwipeScreenKeyType
+    ): Promise<void> => {
+        setIsLoading(true);
+        try {
+            const doesLocalStorageExist = localStorage ? true : false;
+            const storage = doesLocalStorageExist
+                ? localStorage
+                : await LocalStorageStore.getInstance(key, type);
+            if (!doesLocalStorageExist) {
+                setLocalStorage(storage);
             }
-            loadedActionTrie = new Trie(trieName, type)
-        }
-        const localActionHistory = loadedActionTrie.getActionHistory()
-        console.debug("local action history size: ", localActionHistory.length)
-        console.debug("entered load from local storage, media assets size: ", mediaAssets.length)
-        // make local to keep and to delete uri
-        const localToDeleteUri = new Array<string>()
-        let localCurrentIndex = loadedActionTrie.getCurrentIndex()
-        if(mediaAssets.length != loadedActionTrie.getTotalCount()){
-            loadedActionTrie.setTotalCount(mediaAssets.length)
-        }
-        mediaAssets.forEach((asset, index) => {
-            const assetUri = asset.uri;
-            const action = loadedActionTrie.search(assetUri);
-            if (action === TrieEntryType.TO_DELETE) {
-                localToDeleteUri.push(assetUri);
-            } else if (action !== TrieEntryType.TO_SKIP && localCurrentIndex<0) {
-                localCurrentIndex = index
-            }
-        })
-        const localAssetUri = mediaAssets[localCurrentIndex]?.uri
-        if(!localAssetUri){
-            console.error("No asset uri found in local storage: ", localAssetUri)
-        }
-        setCurrentAsset({index: localCurrentIndex ,assetUri: localAssetUri});
-        setCurrentIndex(localCurrentIndex)
-        setToDeleteUri(localToDeleteUri)
-        setActionHistory(localActionHistory)
-        console.debug("local current index: ", localCurrentIndex)
-        setActionTrie(loadedActionTrie)    
-    
-        }catch(error){
-            console.error("error loading action trie from local storage: ", error)
-            throw error
-        }
-    }
 
- 
+            // if null return
+            if (!storage) {
+                console.error('Failed to load LocalStorage from storage', key);
+                return;
+            }
+
+            storage.updateWithExternalActionStack();
+            storage.activate();
+
+            // make local to keep and to delete uri
+            const localToDeleteUri = new Array<AssetType>();
+            let localCurrentIndex = storage.getCurrentIndex();
+            if (storage.getTotalCount() === 0) {
+                storage.setInitialCount(mediaAssets.length);
+            }
+            mediaAssets.forEach((asset, index) => {
+                const assetUri = asset.uri;
+                const action = storage.search(assetUri);
+                if (action === TrieEntryType.TO_DELETE) {
+                    localToDeleteUri.push({
+                        index: index,
+                        uri: assetUri,
+                        albumId: asset.albumId,
+                        creationTime: asset.creationTime,
+                        assetSize: asset.assetSize,
+                        width: asset.width,
+                        height: asset.height,
+                        filename: asset.filename,
+                        mediaType: asset.mediaType,
+                        location: asset.location,
+                    });
+                } else if (
+                    action !== TrieEntryType.TO_SKIP &&
+                    localCurrentIndex < 0
+                ) {
+                    localCurrentIndex = index;
+                }
+            });
+
+            const localAsset = mediaAssets[localCurrentIndex];
+            if (!localAsset) {
+                console.error(
+                    'No asset found in local storage: ',
+                    localAsset,
+                    'at index: ',
+                    localCurrentIndex,
+                    'total count: ',
+                    mediaAssets.length
+                );
+            }
+
+            setCurrentAsset({
+                index: localCurrentIndex,
+                uri: localAsset?.uri,
+                albumId: localAsset?.albumId,
+                creationTime: localAsset?.creationTime,
+                assetSize: localAsset?.assetSize,
+                width: localAsset?.width,
+                height: localAsset?.height,
+                filename: localAsset?.filename,
+                mediaType: localAsset?.mediaType,
+                location: localAsset?.location,
+            });
+            setCurrentIndex(localCurrentIndex);
+            setToDeleteAssets(localToDeleteUri);
+            console.debug('local current index: ', localCurrentIndex);
+            setIsLoading(false);
+        } catch (error) {
+            console.error(
+                'error loading action trie from local storage: ',
+                error
+            );
+            throw error;
+        }
+    };
 
     const translateX = useSharedValue(0);
     // log mediaassets
     console.debug('Media assets length:', mediaAssets.length);
     // local assets length
     console.debug('Stored media assets length:', mediaAssets.length);
-    const router = useRouter();
 
-
-const deleteAssets = async (deleteUris: string[]) => {
-    // handle null assets
-    if (!deleteUris || deleteUris.length === 0){
-    Alert.alert('No media', 'No assets available to delete');
-    return;
-  }
-
-    try {
-        const result: Boolean  = await deleteMedia(deleteUris);
-        if(!actionTrie){
-            console.error('No action trie found in local storage');
-            return
+    const deleteAssets = async (deleteAssets: AssetType[]) => {
+        // handle null assets
+        if (!deleteAssets || deleteAssets.length === 0) {
+            Alert.alert('No media', 'No assets available to delete');
+            return;
         }
-        if(result){
-            Alert.alert('Deleted', 'Selected media files have been deleted');
-            // clear to delete from trie
-            // toDeleteUri.forEach((uri) => {
-            //     actionTrie.delete(uri);
-            // }) TODO: remove this
-            const deletedMediaSize = await getAssetsSize(toDeleteUri)
-            actionTrie.incrementDeletedMediaSize(deletedMediaSize);
-            actionTrie.incrementDeletedCount(toDeleteUri.length);
-            // save trie
-            await saveToAsyncStorage<Trie>(month+"-action-trie", actionTrie)
-            setToDeleteUri([])           
 
-        }
-        router.push({
-            pathname: "/",
-            params: {
-                month: month, // Pass as a string
-                mediaCount: mediaAssets.length - toDeleteUri.length, // Pass as a number
+        try {
+            const deleteUris = deleteAssets.map((item) => item.uri);
+            const deletedMediaSize = await getAssetsSize(deleteUris);
+            const result: Boolean = await deleteMedia(deleteUris);
+            if (!localStorage) {
+                console.error('No action trie found in local storage');
+                return;
             }
-        });
-      } catch (error) {
-        console.error('Error deleting assets:', error);
-        Alert.alert('Error', 'Failed to delete assets');
-      }
-    
-  };
+            if (result) {
+                Alert.alert(
+                    'Deleted',
+                    'Selected media files have been deleted'
+                );
 
-    const handleAction = (action: string, uri:string, index: number) => {
-        if(!actionTrie){
+                localStorage.incrementDeletedMediaSize(deletedMediaSize);
+                localStorage.incrementDeletedCount(deleteUris.length);
+                localStorage.setCurrentIndex(-1);
+                localStorage.clearActionHistory();
+                localStorage.save();
+                localStorage.propogateExternalActions(deleteAssets);
+                setEnableUndo(false);
+                await reloadAssets();
+            }
+        } catch (error) {
+            console.error('Error deleting assets:', error);
+            Alert.alert('Error', 'Failed to delete assets');
+        }
+    };
+
+    const handleAction = (
+        action: SwipeActionType,
+        mediaAsset: AssetType,
+        index: number
+    ) => {
+        if (!localStorage) {
             console.error('No action trie found in local storage');
-            return
+            return;
         }
-        if(!actionHistory){
+        const actionHistory = localStorage.getActionHistory();
+        if (!actionHistory) {
             console.error('No action history object found to execute action');
-            return
+            return;
         }
 
-        console.debug("Trie size before action", actionTrie.size())
+        console.debug('Trie size before action', localStorage.getTrieSize());
+        const uri = mediaAsset.uri;
+
         // Record the action in history
-        setActionHistory((prev) => {
-            const nextVal = [
-            ...prev,
-            {
-                index: currentIndex,
-                action,
-                assetUri: uri,
-            },
-        ]
-        actionTrie.setActionHistory(nextVal)
-        return nextVal
-    });
+        localStorage.pushActionHistory({
+            index: currentIndex,
+            action,
+            uri,
+            albumId: mediaAsset.albumId,
+            creationTime: mediaAsset.creationTime,
+            assetSize: mediaAsset.assetSize,
+            width: mediaAsset.width,
+            height: mediaAsset.height,
+            filename: mediaAsset.filename,
+            mediaType: mediaAsset.mediaType,
+            location: mediaAsset.location,
+        });
 
         // Handle specific actions
-        if (action === 'delete') {
-            setToDeleteUri((prev) => [...prev, uri]);
-            // add to delete trie
-            actionTrie.insert(uri, TrieEntryType.TO_DELETE);
+        if (action === SwipeActionType.DELETE) {
+            setToDeleteAssets((prev) => [...prev, mediaAsset]);
+            localStorage.insert(uri, TrieEntryType.TO_DELETE);
         }
-        if (action === 'keep') {
+        if (action === SwipeActionType.KEEP) {
             // add to keep trie
-            actionTrie.insert(uri, TrieEntryType.TO_KEEP);
-            actionTrie.incrementKeptCount(1);
+            localStorage.insert(uri, TrieEntryType.TO_KEEP);
+            localStorage.incrementKeptCount(1);
         }
 
-        if (action === 'skip') {
-            actionTrie.insert(uri, TrieEntryType.TO_SKIP);
+        if (action === SwipeActionType.SKIP) {
+            localStorage.insert(uri, TrieEntryType.TO_SKIP);
+            localStorage.incrementSkipCount(1);
         }
+        setEnableUndo(true);
         // Move to the next asset
         // set next asset as current asset
         if (currentIndex < mediaAssets.length - 1) {
-            setCurrentAsset({index: currentIndex + 1,  assetUri: mediaAssets[currentIndex + 1].uri});
-            actionTrie.setCurrentIndex(currentIndex + 1);
+            const nextAsset = mediaAssets[currentIndex + 1];
+            setCurrentAsset({
+                index: currentIndex + 1,
+                uri: nextAsset.uri,
+                albumId: nextAsset.albumId,
+                creationTime: nextAsset.creationTime,
+                assetSize: nextAsset.assetSize,
+                width: nextAsset.width,
+                height: nextAsset.height,
+                filename: nextAsset.filename,
+                mediaType: nextAsset.mediaType,
+                location: nextAsset.location,
+            });
+            localStorage.setCurrentIndex(currentIndex + 1);
             setCurrentIndex((prev) => prev + 1);
         }
-        
-        console.debug("Trie size after action", actionTrie.size())
 
+        console.debug('Trie size after action', localStorage.getTrieSize());
     };
 
     const undoLastAction = () => {
-        if(!actionTrie){
+        if (!localStorage) {
             console.error('No action trie found in local storage');
-            return
+            return;
         }
-        if (actionHistory.length > 0) {
-            const lastAction = actionHistory[actionHistory.length - 1];
-
-            // Remove the last action from history
-            setActionHistory((prev) => {
-                const nextVal = prev.slice(0, -1)
-                actionTrie.setActionHistory(nextVal)
-                return nextVal
-            });
-            
+        if (localStorage.getActionHistorySize() > 0) {
+            const lastAction = localStorage.popActionHistory();
+            if (!lastAction) {
+                console.error('No action history object found to undo action');
+                return;
+            }
 
             // If it was a delete action, remove from delete list
-            if (lastAction.action === 'delete') {
-                setToDeleteUri((prev) =>
+            if (lastAction.action === SwipeActionType.DELETE) {
+                setToDeleteAssets((prev) =>
                     // all except the last one, spread
-                    prev.filter((uri) => uri !== lastAction.assetUri)
+                    prev.filter((item) => item.uri !== lastAction.uri)
                 );
             }
             // If it was a keep action, remove from keep list
-            if(lastAction.action === 'keep') {
-                actionTrie.incrementKeptCount(-1);
+            if (lastAction.action === SwipeActionType.KEEP) {
+                localStorage.incrementKeptCount(-1);
             }
             // remove from trie
-            actionTrie.delete(lastAction.assetUri);
+            localStorage.delete(lastAction.uri);
             // Go back to the previous index
-            actionTrie.setCurrentIndex(lastAction.index);
+            localStorage.setCurrentIndex(lastAction.index);
             setCurrentIndex(lastAction.index);
-            setCurrentAsset({index: lastAction.index, assetUri: lastAction.assetUri});
-
+            setCurrentAsset({
+                index: lastAction.index,
+                uri: lastAction.uri,
+                albumId: lastAction.albumId,
+                creationTime: lastAction.creationTime,
+                assetSize: lastAction.assetSize,
+                width: lastAction.width,
+                height: lastAction.height,
+                filename: lastAction.filename,
+                mediaType: lastAction.mediaType,
+                location: lastAction.location,
+            });
+            if (localStorage.getActionHistorySize() === 0) {
+                setEnableUndo(false);
+            }
         }
     };
 
     const proceedToDelete = async () => {
-        console.log('Assets marked for deletion:', toDeleteUri.length);
-        
-        await deleteAssets(toDeleteUri);
-        toDeleteUri.forEach((uri) => {
-            console.log('Will delete:', uri);
-        });
+        setIsLoading(true);
+        try {
+            console.log('Assets marked for deletion:', toDeleteAssets.length);
+
+            await deleteAssets(toDeleteAssets);
+            toDeleteAssets.forEach((item) => {
+                console.log('Will delete:', item);
+            });
+        } catch (error) {
+            console.error('Error deleting assets:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const rStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: translateX.value }],
     }));
     const renderMediaItem = () => {
-
-  
-        const getOverlayLabel = (action: string) => {
+        const getOverlayLabel = (action: SwipeActionType) => {
             let backgroundColor = '';
             let text = '';
             switch (action) {
-            case 'delete':
-                backgroundColor = 'red';
-                text = 'Delete';
-                break;
-            case 'keep':
-                backgroundColor = 'green';
-                text = 'Keep';
-                break;
-            case 'skip':
-                backgroundColor = 'blue';
-                text = 'Decide Later';
-                break;
-            default:
-                break;
+                case SwipeActionType.DELETE:
+                    backgroundColor = 'red';
+                    text = 'Delete';
+                    break;
+                case SwipeActionType.KEEP:
+                    backgroundColor = 'green';
+                    text = 'Keep';
+                    break;
+                case SwipeActionType.SKIP:
+                    backgroundColor = 'blue';
+                    text = 'Decide Later';
+                    break;
+                default:
+                    break;
             }
             return (
-            <View style={[styles.overlayLabelContainer, { backgroundColor }]}>
-                <Text style={styles.overlayLabelText}>{text}</Text>
-            </View>
+                <View
+                    style={[styles.overlayLabelContainer, { backgroundColor }]}
+                >
+                    <Text style={styles.overlayLabelText}>{text}</Text>
+                </View>
             );
         };
-        
 
         return (
             <View style={styles.mediaContainer}>
-                {isLoading? (<ActivityIndicator size="large" color="blue" />) :( <View style={styles.cardContainer} pointerEvents="box-none" key={currentIndex}>
-                  <CardItem
-                    cardWidth={380}
-                    cardHeight={730}
-                    OverlayLabelRight={() => getOverlayLabel('keep')}
-                    OverlayLabelLeft={() => getOverlayLabel('delete')}
-                    OverlayLabelTop={() => getOverlayLabel('skip')}
-                    cardStyle={styles.card}
-                    onSwipedLeft={() => handleAction('delete', currentAsset.assetUri, currentIndex)}
-                    onSwipedRight={() => handleAction('keep', currentAsset.assetUri, currentIndex)}
-                  >
-                    <Image source={{ uri: currentAsset.assetUri }} onLoad={()=>setCurrentAsset({index:currentIndex, assetUri: currentAsset.assetUri})} style={styles.image}   resizeMode="cover"/>
-                  </CardItem>
-                </View>)
-              }
+                {isLoading ? (
+                    <ActivityIndicator size="large" color="blue" />
+                ) : (
+                    <View
+                        style={styles.cardContainer}
+                        pointerEvents="box-none"
+                        key={currentIndex}
+                    >
+                        <CardItem
+                            cardWidth={380}
+                            cardHeight={730}
+                            OverlayLabelRight={() =>
+                                getOverlayLabel(SwipeActionType.KEEP)
+                            }
+                            OverlayLabelLeft={() =>
+                                getOverlayLabel(SwipeActionType.DELETE)
+                            }
+                            OverlayLabelTop={() =>
+                                getOverlayLabel(SwipeActionType.SKIP)
+                            }
+                            cardStyle={styles.card}
+                            onSwipedLeft={() =>
+                                handleAction(
+                                    SwipeActionType.DELETE,
+                                    currentAsset,
+                                    currentIndex
+                                )
+                            }
+                            onSwipedRight={() =>
+                                handleAction(
+                                    SwipeActionType.KEEP,
+                                    currentAsset,
+                                    currentIndex
+                                )
+                            }
+                        >
+                            <Image
+                                source={{ uri: currentAsset.uri }}
+                                onLoad={() => setCurrentAsset(currentAsset)}
+                                style={styles.image}
+                                resizeMode="cover"
+                            />
+                        </CardItem>
+                    </View>
+                )}
             </View>
-          );
-    
+        );
     };
 
-    if(isLoading){
+    if (isLoading) {
         return (
             <View style={styles.container}>
                 <ActivityIndicator size="large" color="blue" />
             </View>
-        )
-    }
-
-
-    if (!permission) { // TODO: remove this if block if not used
-        return (
-            <View style={styles.container}>
-                <Text style={styles.message}>
-                    Please grant media library permissions to use this feature.
-                </Text>
-            </View>
         );
     }
+
     if (mediaAssets.length === 0) {
         return (
             <View style={styles.container}>
@@ -343,35 +447,30 @@ const deleteAssets = async (deleteUris: string[]) => {
 
     return (
         // <GestureHandlerRootView style={styles.container}>
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    {actionHistory?.length > 0 && (
-                        <TouchableOpacity
-                            style={styles.undoButton}
-                            onPress={undoLastAction}
-                        >
-                            <MaterialIcons
-                                name="undo"
-                                size={24}
-                                color="white"
-                            />
-                            <Text style={styles.undoButtonText}>
-                                Undo{' '}
-                                {
-                                    actionHistory[actionHistory.length - 1]
-                                        ?.action
-                                }
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
+        <View style={styles.container}>
+            <View style={styles.header}>
+                {enableUndo && (
+                    <TouchableOpacity
+                        style={styles.undoButton}
+                        onPress={undoLastAction}
+                    >
+                        <MaterialIcons name="undo" size={24} color="white" />
+                        <Text style={styles.undoButtonText}>
+                            Undo{' '}
+                            {capitalizeFirstLetter(
+                                localStorage?.getLastAction()?.toString()
+                            )}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+            </View>
 
-                    <View style={[styles.imageContainer, rStyle]}>
-                        {renderMediaItem()}
-                    </View>
+            <View style={[styles.imageContainer, rStyle]}>
+                {renderMediaItem()}
+            </View>
 
-                <View style={styles.buttonContainer}>
-                    {/* <TouchableOpacity
+            <View style={styles.buttonContainer}>
+                {/* <TouchableOpacity
                         style={[styles.button, styles.deleteButton]}
                         onPress={() => handleAction('delete', currentAsset.assetUri, currentAsset.index)}
                         disabled={currentIndex === mediaAssets.length - 1}
@@ -379,13 +478,13 @@ const deleteAssets = async (deleteUris: string[]) => {
                         <Text style={styles.buttonText}>Delete</Text>
                     </TouchableOpacity> */}
 
-                    {/* <TouchableOpacity
+                {/* <TouchableOpacity
                         style={[styles.button, styles.skipButton]}
                         onPress={skipCurrent}
                     >
                         <Text style={styles.buttonText}>Skip</Text>
                     </TouchableOpacity> */}
-                    {/* <TouchableOpacity
+                {/* <TouchableOpacity
                         style={[styles.button, styles.skipButton]}
                         onPress={() => handleAction('skip', currentAsset.assetUri, currentAsset.index)}
                         disabled={currentIndex === mediaAssets.length - 1}
@@ -393,33 +492,31 @@ const deleteAssets = async (deleteUris: string[]) => {
                         <Text style={styles.buttonText}>Share</Text>
                     </TouchableOpacity> */}
 
-
-
-                    {/* <TouchableOpacity
+                {/* <TouchableOpacity
                         style={[styles.button, styles.keepButton]}
                         onPress={() => handleAction('keep', currentAsset.assetUri, currentAsset.index)}
                         disabled={currentIndex === mediaAssets.length - 1}
                     >
                         <Text style={styles.buttonText}>Keep</Text>
                     </TouchableOpacity> */}
-                </View>
-
-                <TouchableOpacity
-                    style={[
-                        styles.proceedButton,
-                        { opacity: toDeleteUri.length > 0 ? 1 : 0.5 },
-                    ]}
-                    onPress={proceedToDelete}
-                    disabled={toDeleteUri.length === 0}
-                >
-                    <Text style={styles.buttonText}>
-                        Proceed to Delete ({toDeleteUri.length})
-                    </Text>
-                </TouchableOpacity>
-
-                <Text style={styles.counter}>
-                    {currentIndex + 1} / {mediaAssets.length}
-                </Text>
             </View>
+
+            <TouchableOpacity
+                style={[
+                    styles.proceedButton,
+                    { opacity: toDeleteAssets.length > 0 ? 1 : 0.5 },
+                ]}
+                onPress={proceedToDelete}
+                disabled={toDeleteAssets.length === 0}
+            >
+                <Text style={styles.buttonText}>
+                    Proceed to Delete ({toDeleteAssets.length})
+                </Text>
+            </TouchableOpacity>
+
+            <Text style={styles.counter}>
+                {currentIndex + 1} / {mediaAssets.length}
+            </Text>
+        </View>
     );
 }
