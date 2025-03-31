@@ -6,7 +6,13 @@ import {
     Text,
 } from 'react-native';
 import Swiper from 'react-native-deck-swiper';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import SwipeCard from './swipe-card';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import Button from '../common/button';
@@ -165,6 +171,7 @@ const SwiperDeck = ({
                 location: localAsset?.location,
             });
             setCurrentIndex(localCurrentIndex);
+            swiperRef.current?.jumpToCardIndex(localCurrentIndex);
             setToDeleteAssets(localToDeleteUri);
             console.debug('local current index: ', localCurrentIndex);
             setIsLoading(false);
@@ -286,66 +293,51 @@ const SwiperDeck = ({
     };
 
     const undoLastAction = () => {
+        // swiperRef.current?.jumpToCardIndex(currentIndex - 1);
+        // swiperRef.current?.swipeBack(
+        //     (previousCardIndex: number, previousCard: AssetType) => {
         if (!localStorage) {
             console.error('No action trie found in local storage');
             return;
         }
+
         if (localStorage.getActionHistorySize() > 0) {
             const lastAction = localStorage.popActionHistory();
             if (!lastAction) {
                 console.error('No action history object found to undo action');
                 return;
             }
+            console.debug('Swiping back to previous card', lastAction.index);
+            swiperRef.current?.jumpToCardIndex(lastAction.index);
 
             // If it was a delete action, remove from delete list
             if (lastAction.action === SwipeActionType.DELETE) {
-                setToDeleteAssets((prev) =>
+                setToDeleteAssets(
+                    (prev) => prev.slice(0, -1)
                     // all except the last one, spread
-                    prev.filter((item) => item.uri !== lastAction.uri)
+                    // prev.filter(
+                    //     (item) => item.index !== lastAction.index
+                    // )
                 );
+                localStorage.incrementDeletedCount(-1);
             }
             // If it was a keep action, remove from keep list
             if (lastAction.action === SwipeActionType.KEEP) {
                 localStorage.incrementKeptCount(-1);
             }
+
+            setCurrentIndex(lastAction.index);
+            setCurrentAsset(lastAction);
             // remove from trie
             localStorage.delete(lastAction.uri);
             // Go back to the previous index
             localStorage.setCurrentIndex(lastAction.index);
-            setCurrentIndex(lastAction.index);
-            setCurrentAsset({
-                index: lastAction.index,
-                uri: lastAction.uri,
-                albumId: lastAction.albumId,
-                creationTime: lastAction.creationTime,
-                assetSize: lastAction.assetSize,
-                width: lastAction.width,
-                height: lastAction.height,
-                filename: lastAction.filename,
-                mediaType: lastAction.mediaType,
-                location: lastAction.location,
-            });
-            swiperRef.current?.swipeBack(
-                (previousCardIndex: number, previousCard: AssetType) => {
-                    setCurrentIndex(previousCardIndex);
-                    setCurrentAsset({
-                        index: previousCardIndex,
-                        uri: previousCard.uri,
-                        albumId: previousCard.albumId,
-                        creationTime: previousCard.creationTime,
-                        assetSize: previousCard.assetSize,
-                        width: previousCard.width,
-                        height: previousCard.height,
-                        filename: previousCard.filename,
-                        mediaType: previousCard.mediaType,
-                        location: previousCard.location,
-                    });
-                }
-            );
             if (localStorage.getActionHistorySize() === 0) {
                 setEnableUndo(false);
             }
         }
+        //     }
+        // );
     };
 
     const proceedToDelete = async () => {
@@ -363,6 +355,79 @@ const SwiperDeck = ({
             setIsLoading(false);
         }
     };
+    const overlayLabel = useMemo(() => {
+        // let backgroundColor = '';
+        // let text = '';
+        // switch (action) {
+        //     case SwipeActionType.DELETE:
+        //         backgroundColor = 'red';
+        //         text = 'Delete';
+        //         break;
+        //     case SwipeActionType.KEEP:
+        //         backgroundColor = 'green';
+        //         text = 'Keep';
+        //         break;
+        //     case SwipeActionType.SKIP:
+        //         backgroundColor = 'blue';
+        //         text = 'Decide Later';
+        //         break;
+        //     default:
+        //         break;
+        // }
+
+        const overlayStyle = {
+            width: '100%',
+            height: '100%',
+            borderRadius: 48,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'green',
+            color: 'white',
+            fontSize: 24,
+        };
+
+        return {
+            left: {
+                title: 'Delete',
+                style: {
+                    ...overlayStyle,
+                    label: {
+                        color: 'red',
+                    },
+                },
+            },
+            right: {
+                // center it with background green
+                title: 'Keep',
+                style: {
+                    ...overlayStyle,
+                    label: {
+                        color: 'green',
+                    },
+                },
+            },
+        };
+
+        // return (
+        //     <View style={[styles.overlayLabelContainer, { backgroundColor }]}>
+        //         <Text style={styles.overlayLabelText}>{text}</Text>
+        //     </View>
+        // );
+    }, []);
+
+    const renderCard = useCallback(
+        (item: AssetType, index: number) => {
+            return (
+                <SwipeCard
+                    item={item}
+                    index={index}
+                    totalCount={mediaAssets.length}
+                />
+            );
+        },
+        [mediaAssets.length]
+    );
+
     if (isLoading) {
         return (
             <View style={styles.container}>
@@ -388,7 +453,7 @@ const SwiperDeck = ({
                         backgroundColor: 'transparent',
                     }}
                     cards={mediaAssets}
-                    stackSize={3}
+                    stackSize={2}
                     cardIndex={currentIndex}
                     disableTopSwipe
                     disableBottomSwipe
@@ -406,15 +471,16 @@ const SwiperDeck = ({
                             currentIndex
                         )
                     }
+                    keyExtractor={(item: AssetType) => item.index.toString()}
                     swipeBackCard={true}
                     animateCardOpacity={true}
-                    renderCard={(item) => (
-                        <SwipeCard
-                            item={item}
-                            index={currentIndex}
-                            totalCount={mediaAssets.length}
-                        />
-                    )}
+                    swipeAnimationDuration={100}
+                    animateOverlayLabelsOpacity={true}
+                    overlayLabels={overlayLabel}
+                    overlayLabelWrapperStyle={styles.overlayLabelContainer}
+                    renderCard={renderCard}
+                    stackAnimationFriction={15}
+                    stackAnimationTension={80}
                 />
             </View>
             {/* Uncomment the button below if needed */}
@@ -436,13 +502,7 @@ const SwiperDeck = ({
                         name="delete"
                         color={'red'}
                         size={25}
-                        onPress={() =>
-                            handleAction(
-                                SwipeActionType.DELETE,
-                                currentAsset,
-                                currentIndex
-                            )
-                        }
+                        onPress={() => swiperRef.current?.swipeLeft()}
                     />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -454,6 +514,7 @@ const SwiperDeck = ({
                         color={'blue'}
                         size={25}
                         onPress={undoLastAction}
+                        enabled={enableUndo}
                     />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -465,13 +526,7 @@ const SwiperDeck = ({
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={shadow3d}
-                    onPress={() =>
-                        handleAction(
-                            SwipeActionType.KEEP,
-                            currentAsset,
-                            currentIndex
-                        )
-                    }
+                    onPress={() => swiperRef.current?.swipeRight()}
                     className="h-20 w-20 rounded-full bg-gray-50 flex justify-center items-center border border-gray-100"
                 >
                     <MaterialCommunityIcons
