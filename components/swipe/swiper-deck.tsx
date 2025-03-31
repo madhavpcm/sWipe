@@ -319,7 +319,6 @@ const SwiperDeck = ({
                     //     (item) => item.index !== lastAction.index
                     // )
                 );
-                localStorage.incrementDeletedCount(-1);
             }
             // If it was a keep action, remove from keep list
             if (lastAction.action === SwipeActionType.KEEP) {

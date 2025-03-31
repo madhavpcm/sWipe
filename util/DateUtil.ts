@@ -22,6 +22,12 @@ export const getMonthNameFromOneBasedIndex = (index: number): string => {
     return key;
 };
 
+export const getMonthNameFromZeroBasedIndex = (index: number): string => {
+    const key =
+        Object.keys(monthMap).find((key) => monthMap[key] === index) ?? '';
+    return key;
+};
+
 export const convertDateToRelativeTimeString = (date: Date | null) => {
     if (!date) return 'Never';
 

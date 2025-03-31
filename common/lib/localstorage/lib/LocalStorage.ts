@@ -16,6 +16,7 @@ import {
 } from '@/common/lib/localstorage/types/LocalStorageTypes';
 import { Album, getAlbumAsync, getAlbumsAsync } from 'expo-media-library';
 import LocalStorageStore from '../LocalStorageStore';
+import { getTimeBasedMonthKey } from '@/util/StringUtil';
 
 class LocalStorage {
     metadata: LocalStorageMetadata;
@@ -126,6 +127,46 @@ class LocalStorage {
 
             // log album ids
             console.debug('Album ids:', Object.keys(groupedAssets));
+        } else if (this.metadata.getType() === SwipeScreenKeyType.ALBUM) {
+            console.debug('Month propogating:', deletedAssets);
+
+            const groupedAssets = deletedAssets.reduce(
+                (acc, asset) => {
+                    const monthKey = getTimeBasedMonthKey(asset.creationTime);
+                    if (!acc[monthKey]) {
+                        acc[monthKey] = [];
+                    }
+                    acc[monthKey].push(asset);
+                    return acc;
+                },
+                {} as Record<string, AssetType[]>
+            );
+
+            const monthKeys = Object.keys(groupedAssets);
+            for (const monthKey of monthKeys) {
+                const assets = groupedAssets[monthKey];
+                const externalActionStack =
+                    await LocalStorageStore.getExternalActionStackOnly(
+                        monthKey,
+                        SwipeScreenKeyType.MONTH
+                    );
+                for (const asset of assets) {
+                    externalActionStack.push(asset, SwipeActionType.DELETE);
+                }
+                externalActionStack.save();
+
+                const metadata = await LocalStorageStore.getMetadataOnly(
+                    monthKey,
+                    SwipeScreenKeyType.MONTH
+                );
+                // update metadata
+                metadata.incrementDeletedCount(assets.length);
+                metadata.incrementDeletedMediaSize(
+                    assets.reduce((acc, asset) => acc + asset.assetSize, 0)
+                );
+                metadata.incrementExternalActionStackSize(assets.length);
+                metadata.save();
+            }
         }
     }
 
