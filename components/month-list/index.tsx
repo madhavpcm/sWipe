@@ -5,9 +5,9 @@ import {
     MediaListDataType,
     SwipeScreenKeyType,
 } from '@/common/types/SwipeMediaTypes';
-import LocalStorage from '@/common/lib/localstorage/lib/LocalStorage';
 import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 import { useFocusEffect } from 'expo-router';
+import { isMonthKey } from '@/util/StringUtil';
 
 const MonthList = () => {
     const [monthListData, setMonthListData] = useState<MediaListDataType[]>([]);
@@ -18,7 +18,7 @@ const MonthList = () => {
         useCallback(() => {
             const fetchData = async () => {
                 // from async storage get all keys
-                const localStorageKeys = await LocalStorage.getAllKeys();
+                const localStorageKeys = await LocalStorageStore.getAllKeys();
                 console.debug('localStorageKeys:', localStorageKeys);
                 const data: MediaListDataType[] = (
                     await Promise.all(
@@ -27,7 +27,9 @@ const MonthList = () => {
                             const metadata =
                                 await LocalStorageStore.getMetadataOnly(
                                     key,
-                                    SwipeScreenKeyType.MONTH
+                                    isMonthKey(key) // TODO: deprecate this, this is wrong way to get type
+                                        ? SwipeScreenKeyType.MONTH
+                                        : SwipeScreenKeyType.ALBUM
                                 );
                             if (!metadata) {
                                 console.error(

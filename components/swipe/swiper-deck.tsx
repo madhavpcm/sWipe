@@ -193,6 +193,7 @@ const SwiperDeck = ({
 
         try {
             const deleteUris = deleteAssets.map((item) => item.uri);
+            const deletedMediaSize = await getAssetsSize(deleteUris);
             const result: Boolean = await deleteMedia(deleteUris);
             if (!localStorage) {
                 console.error('No action trie found in local storage');
@@ -204,7 +205,6 @@ const SwiperDeck = ({
                     'Selected media files have been deleted'
                 );
 
-                const deletedMediaSize = await getAssetsSize(deleteUris);
                 localStorage.incrementDeletedMediaSize(deletedMediaSize);
                 localStorage.incrementDeletedCount(deleteUris.length);
                 localStorage.setCurrentIndex(-1);

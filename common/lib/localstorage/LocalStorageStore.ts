@@ -109,6 +109,10 @@ class LocalStorageStore {
     static getRefreshState() {
         return this.refreshState;
     }
+
+    static getAllKeys() {
+        return LocalStorage.getAllKeys();
+    }
 }
 
 export default LocalStorageStore;
