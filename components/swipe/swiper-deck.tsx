@@ -15,7 +15,6 @@ import React, {
 } from 'react';
 import SwipeCard from './swipe-card';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import Button from '../common/button';
 import {
     SwipeActionType,
     SwipeComponentInputType,
@@ -77,6 +76,7 @@ const SwiperDeck = ({
             reloadFromLocalStorageOrCache();
         }
     }, [swipeKey, mediaAssets, screenKeyType]);
+
     useFocusEffect(
         useCallback(() => {
             console.debug('use focus effect mounting:', swipeKey);
@@ -173,6 +173,9 @@ const SwiperDeck = ({
             setCurrentIndex(localCurrentIndex);
             swiperRef.current?.jumpToCardIndex(localCurrentIndex);
             setToDeleteAssets(localToDeleteUri);
+            if (storage.getActionHistorySize() > 0) {
+                setEnableUndo(true);
+            }
             console.debug('local current index: ', localCurrentIndex);
             setIsLoading(false);
         } catch (error) {
@@ -268,7 +271,6 @@ const SwiperDeck = ({
             localStorage.insert(uri, TrieEntryType.TO_SKIP);
             localStorage.incrementSkipCount(1);
         }
-        setEnableUndo(true);
         // Move to the next asset
         // set next asset as current asset
         if (currentIndex < mediaAssets.length - 1) {
@@ -302,41 +304,37 @@ const SwiperDeck = ({
         }
 
         if (localStorage.getActionHistorySize() > 0) {
+            setIsLoading(true);
+            setEnableUndo(false);
             const lastAction = localStorage.popActionHistory();
             if (!lastAction) {
                 console.error('No action history object found to undo action');
                 return;
             }
             console.debug('Swiping back to previous card', lastAction.index);
-            swiperRef.current?.jumpToCardIndex(lastAction.index);
+            // swiperRef.current?.jumpToCardIndex(lastAction.index);
+            // swiperRef.current?.swipeBack();
 
             // If it was a delete action, remove from delete list
             if (lastAction.action === SwipeActionType.DELETE) {
-                setToDeleteAssets(
-                    (prev) => prev.slice(0, -1)
-                    // all except the last one, spread
-                    // prev.filter(
-                    //     (item) => item.index !== lastAction.index
-                    // )
-                );
+                setToDeleteAssets((prev) => prev.slice(0, -1));
             }
             // If it was a keep action, remove from keep list
             if (lastAction.action === SwipeActionType.KEEP) {
                 localStorage.incrementKeptCount(-1);
             }
-
+            swiperRef.current?.jumpToCardIndex(lastAction.index);
             setCurrentIndex(lastAction.index);
             setCurrentAsset(lastAction);
             // remove from trie
             localStorage.delete(lastAction.uri);
             // Go back to the previous index
             localStorage.setCurrentIndex(lastAction.index);
-            if (localStorage.getActionHistorySize() === 0) {
-                setEnableUndo(false);
+            if (localStorage.getActionHistorySize() > 0) {
+                setEnableUndo(true);
             }
+            setIsLoading(false);
         }
-        //     }
-        // );
     };
 
     const proceedToDelete = async () => {
@@ -355,25 +353,6 @@ const SwiperDeck = ({
         }
     };
     const overlayLabel = useMemo(() => {
-        // let backgroundColor = '';
-        // let text = '';
-        // switch (action) {
-        //     case SwipeActionType.DELETE:
-        //         backgroundColor = 'red';
-        //         text = 'Delete';
-        //         break;
-        //     case SwipeActionType.KEEP:
-        //         backgroundColor = 'green';
-        //         text = 'Keep';
-        //         break;
-        //     case SwipeActionType.SKIP:
-        //         backgroundColor = 'blue';
-        //         text = 'Decide Later';
-        //         break;
-        //     default:
-        //         break;
-        // }
-
         const overlayStyle = {
             width: '100%',
             height: '100%',
@@ -496,24 +475,24 @@ const SwiperDeck = ({
                 <TouchableOpacity
                     style={shadow3d}
                     className="h-20 w-20 rounded-full bg-gray-50 flex justify-center items-center border border-gray-100"
+                    onPress={() => swiperRef.current?.swipeLeft()}
                 >
                     <MaterialCommunityIcons
                         name="delete"
                         color={'red'}
                         size={25}
-                        onPress={() => swiperRef.current?.swipeLeft()}
                     />
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={shadow3d}
                     className="h-20 w-20 rounded-full bg-gray-50 flex justify-center items-center border border-gray-100"
+                    // disabled={!enableUndo}
+                    onPress={undoLastAction}
                 >
                     <MaterialCommunityIcons
                         name="undo"
                         color={'blue'}
                         size={25}
-                        onPress={undoLastAction}
-                        enabled={enableUndo}
                     />
                 </TouchableOpacity>
                 <TouchableOpacity
