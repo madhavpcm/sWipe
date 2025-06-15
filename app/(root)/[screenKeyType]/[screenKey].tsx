@@ -73,7 +73,7 @@ export default function SwipeScreen() {
     return (
         <View className="flex-1 bg-white p-4">
             <SwiperDeck
-                mediaAssets={mediaAssets}
+                mediaAssets={mediaAssets.filter((asset) => asset!==null)}
                 swipeKey={screenKey}
                 screenKeyType={
                     screenKeyType == 'month'
