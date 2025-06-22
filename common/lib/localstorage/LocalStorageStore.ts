@@ -7,7 +7,16 @@ class LocalStorageStore {
     static localStorageMap: Map<string, LocalStorage> = new Map();
     static maxLocalStorageCount = 15;
     static refreshState = 0;
+    static lastDeckKey: string | null = null;
     private constructor() {}
+
+    static setlastDeckKey(lastDeckKey: string): void {
+        this.lastDeckKey = lastDeckKey;
+    }
+
+    static getlastDeckKey(): string | null {
+        return this.lastDeckKey;
+    }
 
     static async getInstance(
         name: string,

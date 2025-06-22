@@ -28,6 +28,7 @@ import { getAssetsSize } from '@/util/ExpoFileUtil';
 import { deleteMedia } from '@/common/lib/swipeandroid/SwipeAndroidLibary';
 import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 import { styles } from '../swiper/Styles';
+import LocalStorageMetadata from '@/common/lib/localstorage/lib/LocalStorageMetadata';
 
 // Define a style object for the 3D shadow effect
 const shadow3d = {
@@ -80,6 +81,7 @@ const SwiperDeck = ({
             setEnableUndo(hasHistory);
             setHasHistory(hasHistory);
         }
+        
     }, [mediaAssets, localStorage]);
     const swiperRef = useRef<Swiper<AssetType>>(null);
 

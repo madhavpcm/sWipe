@@ -14,6 +14,8 @@ import { getAssetSize } from '@/util/ExpoFileUtil';
 import { SwipeScreenComponent } from '@/components/swiper/SwipeScreenComponent';
 import { getAssetInfoAsync } from 'expo-media-library';
 import * as MediaLibrary from 'expo-media-library';
+import LocalStorageMetadata from '@/common/lib/localstorage/lib/LocalStorageMetadata';
+import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 
 export default function SwipeScreen() {
     const { screenKey, screenKeyType } = useLocalSearchParams<{
@@ -68,7 +70,9 @@ export default function SwipeScreen() {
 
     useEffect(() => {
         loadAssets();
-    }, [screenKey]);
+        LocalStorageStore.setlastDeckKey(screenKey + '/' + screenKeyType);
+        
+    }, [screenKey, screenKeyType]);
 
     return (
         <View className="flex-1 bg-white p-4">

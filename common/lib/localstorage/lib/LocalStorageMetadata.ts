@@ -13,6 +13,7 @@ class LocalStorageMetadata {
     deletedMediaSize: number;
     initalCount: number;
     ExternalActionStackSize: number;
+    lastDeckKey: string;
 
     constructor(name: string, type: SwipeScreenKeyType) {
         this.name = name;
@@ -26,6 +27,7 @@ class LocalStorageMetadata {
         this.deletedMediaSize = 0;
         this.initalCount = 0;
         this.ExternalActionStackSize = 0;
+        this.lastDeckKey = '';
     }
 
     getDeletedMediaSize() {

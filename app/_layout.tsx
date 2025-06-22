@@ -1,10 +1,12 @@
 import { Slot, Stack } from "expo-router";
 import "./global.css"
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Header from "@/components/common/Header";
+import LocalStorageStore from "@/common/lib/localstorage/LocalStorageStore";
+import { router } from "expo-router";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -17,6 +19,9 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+
+   
+    
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }

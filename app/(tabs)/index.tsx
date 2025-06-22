@@ -27,6 +27,7 @@ import React from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Banner } from '@/components/home/banner';
 import { OngoingList } from '@/components/ongoing-list';
+import LocalStorageStore from '@/common/lib/localstorage/LocalStorageStore';
 
 const requestStoragePermission = async () => {
     let permissions = [
@@ -91,8 +92,19 @@ export default function Index() {
     const [isGranted, setisGranted] = useState(false);
 
     useEffect(() => {
+        const path = LocalStorageStore.getlastDeckKey();
+        console.log('Path: ', path);
+        if(path){
+            router.replace({
+                pathname: '/(root)/[screenKeyType]/[screenKey]',
+                params: {
+                    screenKey: path.split('/')[1],
+                    screenKeyType: path.split('/')[0],
+                }
+            });
+        }
         const checkPermissions = async () => {
-            await requestStoragePermission();
+            await requestStoragePermission()
             const { status } = await MediaLibrary.getPermissionsAsync();
             if (status === 'granted') {
                 console.log('Permission granted for expo');
